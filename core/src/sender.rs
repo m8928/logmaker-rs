@@ -228,7 +228,7 @@ impl SenderService {
                 reg_time: slot.reg_time,
             })
             .collect();
-        senders.sort_by(|a, b| b.reg_time.cmp(&a.reg_time));
+        senders.sort_by_key(|item| std::cmp::Reverse(item.reg_time));
         senders
     }
 

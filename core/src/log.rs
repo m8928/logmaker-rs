@@ -324,7 +324,7 @@ impl LogService {
     /// All logs, newest first.
     pub fn list(&self) -> Vec<LogDto> {
         let mut logs: Vec<LogDto> = self.snapshot().iter().map(|log| log.dto()).collect();
-        logs.sort_by(|a, b| b.reg_time.cmp(&a.reg_time));
+        logs.sort_by_key(|item| std::cmp::Reverse(item.reg_time));
         logs
     }
 
