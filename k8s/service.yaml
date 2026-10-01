@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: logmaker
+  namespace: logmaker
+  labels:
+    app: logmaker
+spec:
+  type: ClusterIP
+  selector:
+    app: logmaker
+  ports:
+    - port: 19999
+      targetPort: http
+      protocol: TCP
+      name: http

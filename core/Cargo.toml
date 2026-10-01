@@ -1,0 +1,37 @@
+[package]
+name = "logmaker-core"
+description = "LogMaker server: REST API, log/scenario runtime and web UI hosting"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "logmaker"
+path = "src/main.rs"
+
+[dependencies]
+logmaker-plugin-api.workspace = true
+logmaker-default-plugin.workspace = true
+anyhow.workspace = true
+axum.workspace = true
+clap.workspace = true
+indexmap.workspace = true
+libloading.workspace = true
+mime_guess.workspace = true
+parking_lot.workspace = true
+rand.workspace = true
+rust-embed.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sysinfo.workspace = true
+tempfile.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-appender.workspace = true
+tracing-subscriber.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+tower.workspace = true

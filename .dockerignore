@@ -1,0 +1,12 @@
+.git
+.github
+.claude
+.omc
+target
+core/static
+ui/node_modules
+ui/.svelte-kit
+mcp-server/node_modules
+mcp-server/dist
+*.md
+*.png

@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logmaker
+  namespace: logmaker
+  labels:
+    app: logmaker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logmaker
+  template:
+    metadata:
+      labels:
+        app: logmaker
+    spec:
+      containers:
+        - name: logmaker
+          image: logmaker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 19999
+              name: http
+          env:
+            - name: RUST_LOG
+              value: info
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: plugins
+              mountPath: /app/plugins
+          resources:
+            requests:
+              cpu: 200m
+              memory: 64Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: logmaker-data
+        - name: plugins
+          persistentVolumeClaim:
+            claimName: logmaker-plugins

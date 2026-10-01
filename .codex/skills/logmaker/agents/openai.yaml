@@ -1,0 +1,9 @@
+interface:
+  display_name: "LogMaker"
+  short_description: "Operate LogMaker through its MCP tools"
+  default_prompt: "Use $logmaker to inspect LogMaker state and create a maker, sender, log, or scenario safely."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "logmaker"
+      description: "LogMaker MCP server for dashboard, maker, sender, log, plugin, and scenario operations"

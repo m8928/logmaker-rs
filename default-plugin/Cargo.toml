@@ -1,0 +1,25 @@
+[package]
+name = "logmaker-default-plugin"
+description = "Built-in LogMaker makers (Date, IP, IPRange, NumberRange, Pick, Regex, UUID) and senders (Debug, Syslog, Kafka)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+logmaker-plugin-api.workspace = true
+chrono.workspace = true
+chrono-tz.workspace = true
+crossbeam-channel.workspace = true
+iana-time-zone.workspace = true
+parking_lot.workspace = true
+rand.workspace = true
+rand_distr.workspace = true
+rand_regex.workspace = true
+regex-syntax.workspace = true
+rskafka.workspace = true
+serde_json.workspace = true
+tokio = { workspace = true, features = ["rt", "time", "sync", "macros"] }
+tracing.workspace = true
+uuid.workspace = true

@@ -1,0 +1,47 @@
+[workspace]
+resolver = "3"
+members = ["plugin-api", "default-plugin", "core", "examples/sample-plugin"]
+default-members = ["plugin-api", "default-plugin", "core"]
+
+[workspace.package]
+version = "3.0.0"
+edition = "2024"
+rust-version = "1.85"
+license = "Apache-2.0"
+repository = "https://github.com/m8928/logmaker"
+
+[workspace.dependencies]
+logmaker-plugin-api = { path = "plugin-api" }
+logmaker-default-plugin = { path = "default-plugin" }
+
+anyhow = "1"
+axum = { version = "0.8", features = ["multipart"] }
+chrono = "0.4"
+chrono-tz = "0.10"
+clap = { version = "4", features = ["derive", "env"] }
+crossbeam-channel = "0.5"
+iana-time-zone = "0.1"
+indexmap = { version = "2", features = ["serde"] }
+libloading = "0.9"
+mime_guess = "2"
+parking_lot = "0.12"
+rand = "0.10"
+rand_distr = "0.6"
+rand_regex = "0.19"
+regex-syntax = "0.8"
+rskafka = { version = "0.6", default-features = false }
+rust-embed = { version = "8", features = ["include-exclude"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+sysinfo = { version = "0.37", default-features = false, features = ["system"] }
+tempfile = "3"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal", "time"] }
+tower = { version = "0.5", features = ["util"] }
+tracing = "0.1"
+tracing-appender = "0.2"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1", features = ["v4"] }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

@@ -1,0 +1,42 @@
+replicaCount: 1
+
+image:
+  repository: logmaker
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 19999
+
+ingress:
+  enabled: false
+  className: nginx
+  host: logmaker.example.com
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 64Mi
+  limits:
+    cpu: "1"
+    memory: 512Mi
+
+persistence:
+  data:
+    enabled: true
+    size: 1Gi
+    storageClass: ""
+  plugins:
+    enabled: true
+    size: 500Mi
+    storageClass: ""
+
+# Log filter passed as RUST_LOG, e.g. "info" or "info,logmaker::debug_sender=warn".
+logLevel: info
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

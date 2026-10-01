@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            ui/package-lock.json
+            mcp-server/package-lock.json
+
+      # Built first: the server embeds ui output from core/static.
+      - name: Build Frontend
+        working-directory: ./ui
+        run: |
+          npm ci
+          npm run check
+          npm run build
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Test
+        run: cargo test --workspace --locked
+
+      - name: Build Server
+        run: cargo build --release --locked -p logmaker-core
+
+      - name: Build MCP Server
+        working-directory: ./mcp-server
+        run: |
+          npm ci
+          npm run build

@@ -1,0 +1,14 @@
+[package]
+name = "logmaker-sample-plugin"
+description = "Example external LogMaker plugin: a Counter maker and a File sender"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+logmaker-plugin-api.workspace = true
