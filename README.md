@@ -153,6 +153,8 @@ This repository also includes a project-local Codex Skill at `.codex/skills/logm
 
 Mutating endpoints return `{"type": "SUCCESS" | "ERROR", "message": "...", "notification": true}` with status 200 (success) or 400 (error). Import endpoints return one such result per item.
 
+Names of new Makers, Senders, Logs, and Scenarios may contain only letters, digits, `_`, and `-` (at most 64 characters); Maker names must also start with a letter or `_` so they can be used as `<name>` in log formats. Names already in the data files load unchanged. Clients should percent-encode `{name}` in paths (`encodeURIComponent`).
+
 | Endpoint | Method | Description |
 | --- | --- | --- |
 | `/api/v1/dashboard` | GET | Dashboard metrics |

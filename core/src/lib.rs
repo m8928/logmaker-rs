@@ -5,6 +5,7 @@ mod api_result;
 mod dashboard;
 mod log;
 mod maker;
+mod names;
 mod plugin;
 mod refs;
 mod routes;

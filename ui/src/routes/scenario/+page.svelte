@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { api } from '$lib/api';
+	import { nameError } from '$lib/names';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import Select from '$lib/components/Select.svelte';
 	import { addToast } from '$lib/stores/toast.svelte';
@@ -311,9 +312,8 @@
 	// ── Validate ──────────────────────────────────────────────────────────────
 	function validate(): boolean {
 		errors = {};
-		if (!formName.trim()) errors.name = 'Name is required';
-		if (formName && !/^[a-z0-9][a-z0-9-]*$/.test(formName))
-			errors.name = 'Only lowercase letters, numbers, and hyphens allowed';
+		const nameProblem = editMode ? null : nameError(formName);
+		if (nameProblem) errors.name = nameProblem;
 		if (formIntervalMin < 0) errors.intervalMin = 'Interval min must be >= 0';
 		if (formIntervalMax < formIntervalMin) errors.intervalMax = 'Interval max must be >= min';
 		if (formSteps.length === 0) errors.steps = 'At least one step is required';

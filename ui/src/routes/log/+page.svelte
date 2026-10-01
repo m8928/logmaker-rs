@@ -2,6 +2,7 @@
 	import { api, readJsonResponse, unwrapApiResult } from '$lib/api';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import Tooltip from '$lib/components/Tooltip.svelte';
+	import { nameError } from '$lib/names';
 	import { addToast } from '$lib/stores/toast.svelte';
 	import type { ApiResult, Log, Maker, Sender } from '$lib/types';
 
@@ -404,6 +405,11 @@
 	async function submit() {
 		if (!formName.trim() || !formFormat.trim()) {
 			addToast('warning', 'Name and Format are required');
+			return;
+		}
+		const nameProblem = editMode ? null : nameError(formName);
+		if (nameProblem) {
+			addToast('warning', nameProblem);
 			return;
 		}
 		loading = true;

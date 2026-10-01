@@ -336,10 +336,7 @@ impl LogService {
         self.logs.read().get(name).cloned()
     }
 
-    fn validate(request: &LogRequest) -> Option<ApiResult> {
-        if request.name.as_deref().unwrap_or_default().is_empty() {
-            return Some(ApiResult::validation("name", "Name field value is required"));
-        }
+    fn validate_format(request: &LogRequest) -> Option<ApiResult> {
         if request.format.as_deref().unwrap_or_default().is_empty() {
             return Some(ApiResult::validation("format", "Format field value is required"));
         }
@@ -347,7 +344,9 @@ impl LogService {
     }
 
     pub fn create(&self, request: LogRequest) -> ApiResult {
-        if let Some(error) = Self::validate(&request) {
+        let invalid = crate::names::check_name(request.name.as_deref().unwrap_or_default())
+            .or_else(|| Self::validate_format(&request));
+        if let Some(error) = invalid {
             return error;
         }
         self.register(request, false)
@@ -417,7 +416,7 @@ impl LogService {
     /// its counters.
     pub fn update(&self, name: &str, mut request: LogRequest) -> ApiResult {
         request.name = Some(name.to_owned());
-        if let Some(error) = Self::validate(&request) {
+        if let Some(error) = Self::validate_format(&request) {
             return error;
         }
         let _transition = self.transition.lock();

@@ -34,6 +34,11 @@ fn is_ident_continue(b: u8) -> bool {
     b.is_ascii_alphanumeric() || b == b'_' || b == b'-'
 }
 
+/// Whether `name` can be written as a `<name>` token.
+pub fn is_token_name(name: &str) -> bool {
+    name.bytes().next().is_some_and(is_ident_start) && name.bytes().all(is_ident_continue)
+}
+
 /// Parses `<name>` starting at `start` (which holds `<`); returns the name and
 /// the index after `>`.
 fn token_at(s: &str, start: usize) -> Option<(&str, usize)> {

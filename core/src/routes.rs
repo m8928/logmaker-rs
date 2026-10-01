@@ -4,7 +4,8 @@ use std::sync::Arc;
 
 use axum::body::{Body, Bytes};
 use axum::extract::multipart::MultipartRejection;
-use axum::extract::{DefaultBodyLimit, FromRequest, Multipart, Path, Request, State};
+use axum::extract::{DefaultBodyLimit, FromRequest, FromRequestParts, Multipart, Path, Request, State};
+use axum::http::request::Parts;
 use axum::http::{HeaderValue, StatusCode, Uri, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{delete, get, post, put};
@@ -99,6 +100,21 @@ impl<T: DeserializeOwned, S: Send + Sync> FromRequest<S> for ApiJson<T> {
     }
 }
 
+/// The `{name}` path parameter; malformed values (e.g. invalid UTF-8) are
+/// reported as an `ApiResult`.
+struct ApiPath(String);
+
+impl<S: Send + Sync> FromRequestParts<S> for ApiPath {
+    type Rejection = ApiResult;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        Path::<String>::from_request_parts(parts, state)
+            .await
+            .map(|Path(value)| ApiPath(value))
+            .map_err(|e| ApiResult::error(e.body_text()))
+    }
+}
+
 /// Reads the `file` part of a multipart upload.
 async fn upload_file(multipart: Result<Multipart, MultipartRejection>) -> Result<(Option<String>, Bytes), ApiResult> {
     let mut multipart = multipart.map_err(|e| ApiResult::error(format!("Invalid upload ({})", e.body_text())))?;
@@ -155,13 +171,13 @@ async fn import_maker_file(State(state): AppStateRef, multipart: Result<Multipar
 
 async fn update_maker(
     State(state): AppStateRef,
-    Path(name): Path<String>,
+    ApiPath(name): ApiPath,
     ApiJson(request): ApiJson<MakerRequest>,
 ) -> ApiResult {
     result(move || state.makers.update(&name, request)).await
 }
 
-async fn delete_maker(State(state): AppStateRef, Path(name): Path<String>) -> ApiResult {
+async fn delete_maker(State(state): AppStateRef, ApiPath(name): ApiPath) -> ApiResult {
     result(move || state.makers.delete(&name)).await
 }
 
@@ -188,13 +204,13 @@ async fn import_sender_file(State(state): AppStateRef, multipart: Result<Multipa
 
 async fn update_sender(
     State(state): AppStateRef,
-    Path(name): Path<String>,
+    ApiPath(name): ApiPath,
     ApiJson(request): ApiJson<SenderRequest>,
 ) -> ApiResult {
     result(move || state.senders.update(&name, request)).await
 }
 
-async fn delete_sender(State(state): AppStateRef, Path(name): Path<String>) -> ApiResult {
+async fn delete_sender(State(state): AppStateRef, ApiPath(name): ApiPath) -> ApiResult {
     result(move || state.senders.delete(&name)).await
 }
 
@@ -225,18 +241,18 @@ async fn import_log_file(State(state): AppStateRef, multipart: Result<Multipart,
 
 async fn update_log(
     State(state): AppStateRef,
-    Path(name): Path<String>,
+    ApiPath(name): ApiPath,
     ApiJson(request): ApiJson<LogRequest>,
 ) -> ApiResult {
     result(move || state.logs.update(&name, request)).await
 }
 
-async fn delete_log(State(state): AppStateRef, Path(name): Path<String>) -> ApiResult {
+async fn delete_log(State(state): AppStateRef, ApiPath(name): ApiPath) -> ApiResult {
     result(move || state.logs.delete(&name)).await
 }
 
 /// `POST /log/{name}:start` and `POST /log/{name}:stop`.
-async fn log_action(State(state): AppStateRef, Path(target): Path<String>) -> Response {
+async fn log_action(State(state): AppStateRef, ApiPath(target): ApiPath) -> Response {
     let Some((name, pause)) = action(&target) else {
         return not_found();
     };
@@ -258,7 +274,7 @@ async fn upload_plugin(State(state): AppStateRef, multipart: Result<Multipart, M
     }
 }
 
-async fn delete_plugin(State(state): AppStateRef, Path(name): Path<String>) -> ApiResult {
+async fn delete_plugin(State(state): AppStateRef, ApiPath(name): ApiPath) -> ApiResult {
     result(move || state.delete_plugin(&name)).await
 }
 
@@ -310,18 +326,18 @@ async fn create_scenario(State(state): AppStateRef, ApiJson(config): ApiJson<Sce
 
 async fn update_scenario(
     State(state): AppStateRef,
-    Path(name): Path<String>,
+    ApiPath(name): ApiPath,
     ApiJson(config): ApiJson<ScenarioConfig>,
 ) -> ApiResult {
     result(move || state.scenarios.update(&name, config)).await
 }
 
-async fn delete_scenario(State(state): AppStateRef, Path(name): Path<String>) -> ApiResult {
+async fn delete_scenario(State(state): AppStateRef, ApiPath(name): ApiPath) -> ApiResult {
     result(move || state.scenarios.delete(&name)).await
 }
 
 /// `POST /scenario/{name}:start` and `POST /scenario/{name}:stop`.
-async fn scenario_action(State(state): AppStateRef, Path(target): Path<String>) -> Response {
+async fn scenario_action(State(state): AppStateRef, ApiPath(target): ApiPath) -> Response {
     let Some((name, stop)) = action(&target) else {
         return not_found();
     };

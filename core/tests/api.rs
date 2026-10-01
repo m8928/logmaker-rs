@@ -466,3 +466,78 @@ async fn scenario_number_fields_accept_null() {
         (json!(1000), json!(5000))
     );
 }
+
+#[tokio::test]
+async fn new_names_must_be_url_safe() {
+    let app = TestApp::new();
+    let characters = "Name may only contain letters, digits, '_' and '-' (at most 64 characters)";
+    for name in ["a b", "a#b", "a?b", "a/b", "..", "한글", " pad", &"x".repeat(65)] {
+        let cases = [
+            ("/api/v1/maker", json!({"name": name, "type": "IP"})),
+            ("/api/v1/sender", json!({"name": name, "type": "Capture"})),
+            ("/api/v1/log", json!({"name": name, "format": "x"})),
+            ("/api/v1/scenario", json!({"name": name})),
+        ];
+        for (path, body) in cases {
+            let (status, result) = app.post(path, body).await;
+            assert_eq!(
+                (status, &result["data"]["name"]),
+                (StatusCode::BAD_REQUEST, &json!(characters)),
+                "{path} {name:?}"
+            );
+        }
+    }
+    let (_, result) = app
+        .post("/api/v1/maker", json!({"name": "404-code", "type": "IP"}))
+        .await;
+    assert_eq!(
+        result["data"]["name"],
+        "Maker name must start with a letter or '_' to be usable as <name> in log formats"
+    );
+    app.ok("/api/v1/sender", json!({"name": "404-code", "type": "Capture"}))
+        .await;
+    app.ok("/api/v1/maker", json!({"name": "Src_IP-2", "type": "IP"})).await;
+    let (_, result) = app
+        .post("/api/v1/maker:import", json!([{"name": "bad name", "type": "IP"}]))
+        .await;
+    assert_eq!(result[0]["data"]["name"], characters);
+}
+
+#[tokio::test]
+async fn stored_names_outside_the_rules_stay_manageable() {
+    let mut app = TestApp::new();
+    let data = app.dir.path().join("data");
+    std::fs::create_dir_all(&data).unwrap();
+    let maker = json!([{"name": "a", "type": "Fixed", "args": {"value": "A"}}, {"name": "a#b", "type": "Fixed", "args": {"value": "B"}}]);
+    std::fs::write(data.join("makers.json"), maker.to_string()).unwrap();
+    let logs =
+        json!([{"name": "a", "format": "<a>", "paused": true}, {"name": "로그 a#b", "format": "<a>", "paused": true}]);
+    std::fs::write(data.join("logs.json"), logs.to_string()).unwrap();
+    app.restart();
+
+    // Paths as the UI builds them: encodeURIComponent(name).
+    let (status, _) = app.put("/api/v1/maker/a%23b", json!({"args": {"value": "C"}})).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(app.find("/api/v1/maker", "a#b").await["sample"], "C");
+    let log = "%EB%A1%9C%EA%B7%B8%20a%23b";
+    app.ok(&format!("/api/v1/log/{log}:start"), json!(null)).await;
+    let (status, result) = app.delete(&format!("/api/v1/log/{log}")).await;
+    assert_eq!(
+        (status, &result["message"]),
+        (StatusCode::OK, &json!("Successfully deleted log"))
+    );
+    assert_eq!(
+        app.get("/api/v1/log").await.as_array().unwrap().len(),
+        1,
+        "log a is untouched"
+    );
+
+    let request = axum::http::Request::delete("/api/v1/maker/%FF")
+        .body(axum::body::Body::empty())
+        .unwrap();
+    let (status, result) = app.send(request).await;
+    assert_eq!(
+        (status, result["type"].clone()),
+        (StatusCode::BAD_REQUEST, json!("ERROR"))
+    );
+}

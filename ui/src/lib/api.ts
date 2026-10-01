@@ -97,8 +97,8 @@ export const api = {
 	createMaker: (data: Partial<Maker>) =>
 		request<ApiResult>('/maker', { method: 'POST', body: JSON.stringify(data) }),
 	updateMaker: (name: string, data: Partial<Maker>) =>
-		request<ApiResult>(`/maker/${name}`, { method: 'PUT', body: JSON.stringify(data) }),
-	deleteMaker: (name: string) => request<ApiResult>(`/maker/${name}`, { method: 'DELETE' }),
+		request<ApiResult>(`/maker/${encodeURIComponent(name)}`, { method: 'PUT', body: JSON.stringify(data) }),
+	deleteMaker: (name: string) => request<ApiResult>(`/maker/${encodeURIComponent(name)}`, { method: 'DELETE' }),
 
 	// Senders
 	getSenders: () => fetchJson<Sender[]>('/sender'),
@@ -106,34 +106,34 @@ export const api = {
 	createSender: (data: Partial<Sender>) =>
 		request<ApiResult>('/sender', { method: 'POST', body: JSON.stringify(data) }),
 	updateSender: (name: string, data: Partial<Sender>) =>
-		request<ApiResult>(`/sender/${name}`, { method: 'PUT', body: JSON.stringify(data) }),
-	deleteSender: (name: string) => request<ApiResult>(`/sender/${name}`, { method: 'DELETE' }),
+		request<ApiResult>(`/sender/${encodeURIComponent(name)}`, { method: 'PUT', body: JSON.stringify(data) }),
+	deleteSender: (name: string) => request<ApiResult>(`/sender/${encodeURIComponent(name)}`, { method: 'DELETE' }),
 
 	// Logs
 	getLogs: () => fetchJson<Log[]>('/log'),
 	createLog: (data: Partial<Log>) =>
 		request<ApiResult>('/log', { method: 'POST', body: JSON.stringify(data) }),
 	updateLog: (name: string, data: Partial<Log>) =>
-		request<ApiResult>(`/log/${name}`, { method: 'PUT', body: JSON.stringify(data) }),
-	deleteLog: (name: string) => request<ApiResult>(`/log/${name}`, { method: 'DELETE' }),
-	startLog: (name: string) => request<ApiResult>(`/log/${name}:start`, { method: 'POST' }),
-	stopLog: (name: string) => request<ApiResult>(`/log/${name}:stop`, { method: 'POST' }),
+		request<ApiResult>(`/log/${encodeURIComponent(name)}`, { method: 'PUT', body: JSON.stringify(data) }),
+	deleteLog: (name: string) => request<ApiResult>(`/log/${encodeURIComponent(name)}`, { method: 'DELETE' }),
+	startLog: (name: string) => request<ApiResult>(`/log/${encodeURIComponent(name)}:start`, { method: 'POST' }),
+	stopLog: (name: string) => request<ApiResult>(`/log/${encodeURIComponent(name)}:stop`, { method: 'POST' }),
 	previewLog: (data: Partial<Log>) =>
 		request<ApiResult>('/log:preview', { method: 'POST', body: JSON.stringify(data) }),
 
 	// Plugins
 	getPlugins: () => fetchJson<Plugin[]>('/plugin'),
-	deletePlugin: (name: string) => request<ApiResult>(`/plugin/${name}`, { method: 'DELETE' }),
+	deletePlugin: (name: string) => request<ApiResult>(`/plugin/${encodeURIComponent(name)}`, { method: 'DELETE' }),
 
 	// Scenarios
 	getScenarios: () => fetchJson<Scenario[]>('/scenario'),
 	createScenario: (data: Partial<Scenario>) =>
 		request<ApiResult>('/scenario', { method: 'POST', body: JSON.stringify(data) }),
 	updateScenario: (name: string, data: Partial<Scenario>) =>
-		request<ApiResult>(`/scenario/${name}`, { method: 'PUT', body: JSON.stringify(data) }),
-	deleteScenario: (name: string) => request<ApiResult>(`/scenario/${name}`, { method: 'DELETE' }),
+		request<ApiResult>(`/scenario/${encodeURIComponent(name)}`, { method: 'PUT', body: JSON.stringify(data) }),
+	deleteScenario: (name: string) => request<ApiResult>(`/scenario/${encodeURIComponent(name)}`, { method: 'DELETE' }),
 	startScenario: (name: string) =>
-		request<ApiResult>(`/scenario/${name}:start`, { method: 'POST' }),
+		request<ApiResult>(`/scenario/${encodeURIComponent(name)}:start`, { method: 'POST' }),
 	stopScenario: (name: string) =>
-		request<ApiResult>(`/scenario/${name}:stop`, { method: 'POST' })
+		request<ApiResult>(`/scenario/${encodeURIComponent(name)}:stop`, { method: 'POST' })
 };

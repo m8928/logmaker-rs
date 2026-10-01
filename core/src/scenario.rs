@@ -206,8 +206,8 @@ impl ScenarioService {
     }
 
     pub fn create(&self, config: ScenarioConfig) -> ApiResult {
-        if config.name.trim().is_empty() {
-            return ApiResult::validation("name", "Name field value is required");
+        if let Some(error) = crate::names::check_name(&config.name) {
+            return error;
         }
         self.register(config, false)
     }

@@ -3,6 +3,7 @@
 	import DynamicInput from '$lib/components/DynamicInput.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import Select from '$lib/components/Select.svelte';
+	import { nameError } from '$lib/names';
 	import { addToast } from '$lib/stores/toast.svelte';
 	import type { ApiResult, Sender, PluginType } from '$lib/types';
 
@@ -59,9 +60,8 @@
 
 	function validate(): boolean {
 		errors = {};
-		if (!formName.trim()) errors.name = 'Name is required';
-		if (formName && !/^[a-z0-9][a-z0-9-]*$/.test(formName))
-			errors.name = 'Only lowercase letters, numbers, and hyphens allowed';
+		const nameProblem = editMode ? null : nameError(formName);
+		if (nameProblem) errors.name = nameProblem;
 		if (!formType) errors.type = 'Type is required';
 		if (formType) validateRequiredArgs();
 		return Object.keys(errors).length === 0;

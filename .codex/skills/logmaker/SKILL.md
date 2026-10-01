@@ -35,6 +35,8 @@ For import/export:
 - Use `import_makers`, `import_senders`, and `import_logs` when the JSON is already in the prompt or working context.
 - Use `import_makers_file`, `import_senders_file`, `import_logs_file`, or `install_plugin` only with file paths local to the MCP server process.
 
+Names of new makers, senders, logs and scenarios: letters, digits, `_` and `-` only, at most 64 characters. Maker names must start with a letter or `_` (they are referenced as `<name>` in log formats).
+
 For plugin management:
 
 - Use `list_plugins` before install/delete.

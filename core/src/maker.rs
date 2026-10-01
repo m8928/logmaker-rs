@@ -174,8 +174,8 @@ impl MakerService {
     }
 
     pub fn create(&self, request: MakerRequest) -> ApiResult {
-        if request.name.as_deref().unwrap_or_default().is_empty() {
-            return ApiResult::validation("name", "Name field value is required");
+        if let Some(error) = crate::names::check_maker_name(request.name.as_deref().unwrap_or_default()) {
+            return error;
         }
         self.register(request, false)
     }
