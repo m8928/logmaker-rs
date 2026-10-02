@@ -34,10 +34,10 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-logmaker-plugin-api = { git = "https://github.com/m8928/logmaker" }
+logmaker-plugin-api = { git = "https://github.com/m8928/logmaker-rs" }
 ```
 
-LogMaker 저장소 안에서 개발한다면 `logmaker-plugin-api = { path = "../plugin-api" }` 처럼 경로 의존성을 사용합니다.
+재현 가능한 빌드를 위해 `rev = "<커밋 해시>"`나 `tag`로 버전을 고정하는 것을 권장합니다. LogMaker 저장소 안에서 개발한다면 `logmaker-plugin-api = { path = "../plugin-api" }` 처럼 경로 의존성을 사용합니다.
 
 ---
 

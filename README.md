@@ -81,8 +81,8 @@ flowchart LR
 ### Build and Run
 
 ```bash
-git clone https://github.com/m8928/logmaker.git
-cd logmaker
+git clone https://github.com/m8928/logmaker-rs.git
+cd logmaker-rs
 
 cd ui
 npm install
