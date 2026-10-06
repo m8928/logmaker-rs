@@ -20,6 +20,7 @@ chrono = "0.4"
 chrono-tz = "0.10"
 clap = { version = "4", features = ["derive", "env"] }
 crossbeam-channel = "0.5"
+daemonize = "0.5"
 iana-time-zone = "0.1"
 indexmap = { version = "2", features = ["serde"] }
 libloading = "0.9"

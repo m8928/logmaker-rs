@@ -106,9 +106,25 @@ The UI is embedded at compile time; rebuild the server after rebuilding the UI. 
 | `--data-root` | `LOGMAKER_DATA_ROOT` | `~/.logmaker-data` | Maker/Sender/Log/Scenario JSON files |
 | `--plugin-root` | `LOGMAKER_PLUGIN_ROOT` | `~/.logmaker-plugin` | Plugin libraries, loaded at startup |
 | `--log-dir` | `LOGMAKER_LOG_DIR` | `logs` | Daily-rotated log files (30 kept); empty disables file logging |
+| `-d`, `--daemon` | | off | Run in the background (Unix); see below |
+| `--pid-file` | `LOGMAKER_PID_FILE` | `logmaker.pid` | PID file used in daemon mode |
 | | `RUST_LOG` | `info` | Log filter, e.g. `info,logmaker::debug_sender=warn` |
 
 The Java-style flags `--server.port`, `--data.root`, and `--plugin.root` are accepted as aliases.
+
+### Daemon Mode
+
+```bash
+./logmaker --daemon --data-root ./data --plugin-root ./plugins
+# logmaker started in the background (pid 34534, pid file logmaker.pid)
+
+kill -TERM "$(cat logmaker.pid)"   # graceful stop; the PID file is removed on exit
+```
+
+- The command returns once the server is listening. If startup fails (port in use, unreadable data, ...), it prints the error and exits non-zero.
+- The daemon keeps the current directory, so relative paths keep their meaning. Its output goes only to the log directory; stdout/stderr (e.g. panics) go to `<log-dir>/logmaker.out`.
+- The PID file stays locked while the daemon runs, so a second daemon with the same PID file is refused.
+- Under systemd or in containers, run in the foreground (without `--daemon`) instead.
 
 ### Development Mode
 
@@ -230,7 +246,7 @@ Deployment assets are included for container and Kubernetes environments:
 - [k8s](./k8s)
 - [helm/logmaker](./helm/logmaker)
 
-`script/startup.sh` and `script/shutdown.sh` run the binary in the background with `./data` and `./plugins` next to it.
+`script/startup.sh` starts the binary in daemon mode with `./data`, `./plugins`, `./logs`, and `logmaker.pid` next to it (extra options via `LOGMAKER_OPTS`); `script/shutdown.sh` stops it and waits until it has exited.
 
 ## License
 
