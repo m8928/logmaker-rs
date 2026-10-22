@@ -54,3 +54,69 @@ jobs:
         run: |
           npm ci
           npm run build
+
+  windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Build Frontend
+        working-directory: ./ui
+        run: |
+          npm ci
+          npm run build
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+          targets: x86_64-pc-windows-gnu
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Test
+        run: cargo test --workspace --locked
+
+      # Plugin DLLs cross-built with the GNU toolchain (e.g. on macOS or Linux)
+      # must load in the MSVC-built server.
+      - name: Test GNU-built plugin DLL
+        env:
+          SAMPLE_PLUGIN_TARGET: x86_64-pc-windows-gnu
+        run: cargo test --locked -p logmaker-core --test native_plugin
+
+      - name: Build Server
+        run: cargo build --release --locked -p logmaker-core
+
+      - name: Smoke test
+        shell: pwsh
+        run: |
+          & target\release\logmaker.exe --daemon
+          if ($LASTEXITCODE -ne 1) { throw "--daemon should be refused on Windows" }
+          $server = Start-Process -FilePath target\release\logmaker.exe -PassThru -NoNewWindow `
+            -ArgumentList '--port','19999','--data-root','smoke\data','--plugin-root','smoke\plugins','--log-dir','smoke\logs'
+          $up = $false
+          for ($i = 0; $i -lt 60 -and -not $up; $i++) {
+            try { $up = (Invoke-RestMethod http://127.0.0.1:19999/actuator/health).status -eq 'UP' }
+            catch { Start-Sleep -Milliseconds 500 }
+          }
+          $ui = (Invoke-WebRequest http://127.0.0.1:19999/ -UseBasicParsing).StatusCode
+          Stop-Process -Id $server.Id
+          if (-not $up -or $ui -ne 200) { Get-Content smoke\logs\*; throw "server did not start" }
+          "health UP, UI $ui"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: logmaker-windows-x86_64
+          path: target/release/logmaker.exe
+          retention-days: 14

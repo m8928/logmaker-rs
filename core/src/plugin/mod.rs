@@ -16,6 +16,10 @@ use parking_lot::RwLock;
 /// File extensions accepted as plugin libraries.
 pub const LIBRARY_EXTENSIONS: [&str; 3] = ["so", "dylib", "dll"];
 
+/// Extension added to plugin files that could not be deleted because they are
+/// loaded (Windows locks loaded DLLs). They are deleted at the next start.
+const DELETED_EXTENSION: &str = "deleted";
+
 struct LoadedPlugin {
     info: PluginInfo,
     /// Library file in the plugin directory; `None` for built-in plugins.
@@ -87,6 +91,18 @@ fn find_sender(plugins: &[LoadedPlugin], type_name: &str) -> Option<(String, Arc
             .find(|f| f.type_name() == type_name)
             .map(|f| (p.info.id.clone(), Arc::clone(f)))
     })
+}
+
+/// Deletes a plugin library. A loaded DLL cannot be deleted on Windows, so it
+/// is renamed to `*.deleted` and deleted at the next start instead.
+fn remove_library_file(path: &Path) -> Result<(), String> {
+    let Err(error) = fs::remove_file(path) else {
+        return Ok(());
+    };
+    let mut deferred = path.as_os_str().to_owned();
+    deferred.push(".");
+    deferred.push(DELETED_EXTENSION);
+    fs::rename(path, &deferred).map_err(|_| format!("cannot delete {}: {error}", path.display()))
 }
 
 impl PluginManager {
@@ -169,6 +185,12 @@ impl PluginManager {
             .collect();
         paths.sort();
         for path in paths {
+            if path.extension().is_some_and(|e| e == DELETED_EXTENSION) {
+                if let Err(e) = fs::remove_file(&path) {
+                    tracing::warn!("cannot delete removed plugin file {}: {e}", path.display());
+                }
+                continue;
+            }
             if !has_library_extension(&path) {
                 if path.extension().is_some_and(|e| e == "jar") {
                     tracing::warn!(
@@ -220,9 +242,10 @@ impl PluginManager {
     pub fn uninstall(&self, id: &str) -> Result<(), String> {
         let mut plugins = self.plugins.write();
         let index = removable_index(&plugins, id)?;
-        let plugin = plugins.remove(index);
-        let path = plugin.path.expect("external plugins have a file");
-        fs::remove_file(&path).map_err(|e| format!("cannot delete {}: {e}", path.display()))
+        let path = plugins[index].path.clone().expect("external plugins have a file");
+        remove_library_file(&path)?;
+        plugins.remove(index);
+        Ok(())
     }
 
     pub fn list(&self) -> Vec<PluginSummary> {

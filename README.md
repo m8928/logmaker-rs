@@ -126,6 +126,12 @@ kill -TERM "$(cat logmaker.pid)"   # graceful stop; the PID file is removed on e
 - The PID file stays locked while the daemon runs, so a second daemon with the same PID file is refused.
 - Under systemd or in containers, run in the foreground (without `--daemon`) instead.
 
+### Windows
+
+Build as above; the server is `target\release\logmaker.exe`. `--daemon` is not available on Windows: run it in a console window, where Ctrl+C or closing the window stops it gracefully. `script\startup.cmd` starts it in a new window with `data`, `plugins`, and `logs` next to the executable; if startup fails, the window stays open with the error.
+
+Plugins are `.dll` files. Windows locks loaded DLLs, so deleting a plugin renames its file to `*.deleted`, which is removed at the next start.
+
 ### Development Mode
 
 Run the backend:
@@ -246,7 +252,7 @@ Deployment assets are included for container and Kubernetes environments:
 - [k8s](./k8s)
 - [helm/logmaker](./helm/logmaker)
 
-`script/startup.sh` starts the binary in daemon mode with `./data`, `./plugins`, `./logs`, and `logmaker.pid` next to it (extra options via `LOGMAKER_OPTS`); `script/shutdown.sh` stops it and waits until it has exited.
+On Windows, use `script/startup.cmd` instead. `script/startup.sh` starts the binary in daemon mode with `./data`, `./plugins`, `./logs`, and `logmaker.pid` next to it (extra options via `LOGMAKER_OPTS`); `script/shutdown.sh` stops it and waits until it has exited.
 
 ## License
 

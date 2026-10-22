@@ -9,6 +9,7 @@ use std::path::Path;
 use std::process::ExitCode;
 
 /// Result of launching in daemon mode, seen by each process.
+#[cfg_attr(not(unix), allow(dead_code))]
 pub enum Launch {
     /// The launching process: exit with this code.
     Parent(ExitCode),

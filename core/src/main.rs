@@ -108,7 +108,30 @@ async fn shutdown_signal() {
             Err(_) => std::future::pending().await,
         }
     };
-    #[cfg(not(unix))]
+    // Ctrl+Break, closing the console window, logging off or shutting down
+    // Windows. For the last three Windows waits a few seconds for the process
+    // to exit, which leaves time for a graceful stop.
+    #[cfg(windows)]
+    let terminate = async {
+        use tokio::signal::windows;
+        match (
+            windows::ctrl_break(),
+            windows::ctrl_close(),
+            windows::ctrl_logoff(),
+            windows::ctrl_shutdown(),
+        ) {
+            (Ok(mut ctrl_break), Ok(mut close), Ok(mut logoff), Ok(mut shutdown)) => {
+                tokio::select! {
+                    _ = ctrl_break.recv() => {},
+                    _ = close.recv() => {},
+                    _ = logoff.recv() => {},
+                    _ = shutdown.recv() => {},
+                }
+            }
+            _ => std::future::pending().await,
+        }
+    };
+    #[cfg(not(any(unix, windows)))]
     let terminate = std::future::pending::<()>();
     tokio::select! {
         () = ctrl_c => {},

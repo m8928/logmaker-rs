@@ -202,7 +202,7 @@ export_plugin!(definition);
 cargo build --release
 ```
 
-결과물은 플랫폼에 따라 `target/release/libmy_logmaker_plugin.so`(Linux), `.dylib`(macOS), `my_logmaker_plugin.dll`(Windows)입니다. 서버와 같은 OS/CPU 아키텍처로 빌드해야 합니다. Docker 이미지(Debian bookworm, glibc)용 플러그인은 Linux 환경에서 빌드합니다.
+결과물은 플랫폼에 따라 `target/release/libmy_logmaker_plugin.so`(Linux), `.dylib`(macOS), `my_logmaker_plugin.dll`(Windows)입니다. 서버와 같은 OS/CPU 아키텍처로 빌드해야 합니다. Windows용 DLL은 macOS/Linux에서도 mingw-w64로 크로스 빌드할 수 있습니다(`rustup target add x86_64-pc-windows-gnu` 후 `cargo build --release --target x86_64-pc-windows-gnu`). Docker 이미지(Debian bookworm, glibc)용 플러그인은 Linux 환경에서 빌드합니다.
 
 설치 방법:
 

@@ -1,8 +1,11 @@
 //! Builds `examples/sample-plugin` and loads it through the upload API.
+//!
+//! `SAMPLE_PLUGIN_TARGET` builds the plugin for another target, e.g. a
+//! `x86_64-pc-windows-gnu` DLL loaded by an MSVC-built server.
 
 mod common;
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::Duration;
 
@@ -12,11 +15,14 @@ use serde_json::{Value, json};
 /// Builds the sample plugin and returns the path of its library.
 fn build_sample_plugin() -> PathBuf {
     let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".into());
-    let output = Command::new(cargo)
+    let mut command = Command::new(cargo);
+    command
         .args(["build", "-p", "logmaker-sample-plugin", "--message-format=json"])
-        .current_dir(env!("CARGO_MANIFEST_DIR"))
-        .output()
-        .expect("run cargo build");
+        .current_dir(env!("CARGO_MANIFEST_DIR"));
+    if let Ok(target) = std::env::var("SAMPLE_PLUGIN_TARGET") {
+        command.args(["--target", &target]);
+    }
+    let output = command.output().expect("run cargo build");
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
     String::from_utf8_lossy(&output.stdout)
         .lines()
@@ -28,6 +34,18 @@ fn build_sample_plugin() -> PathBuf {
         .filter_map(|file| file.as_str().map(PathBuf::from))
         .find(|file| file.extension().is_some_and(|e| e == std::env::consts::DLL_EXTENSION))
         .expect("sample plugin library artifact")
+}
+
+/// Plugin libraries in `dir` that would be loaded at startup.
+fn libraries(dir: &Path) -> Vec<PathBuf> {
+    std::fs::read_dir(dir)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .filter(|path| {
+            path.extension()
+                .is_some_and(|e| e == "so" || e == "dylib" || e == "dll")
+        })
+        .collect()
 }
 
 #[tokio::test]
@@ -99,7 +117,8 @@ async fn uploads_and_uses_a_native_plugin() {
     let (_, body) = app.delete("/api/v1/plugin/sample-plugin").await;
     assert_eq!(body["message"], "Successfully deleted plugin");
     assert!(app.get("/api/v1/maker").await.as_array().unwrap().is_empty());
-    assert_eq!(std::fs::read_dir(app.dir.path().join("plugins")).unwrap().count(), 0);
+    // Deleted, or renamed to *.deleted where the loaded file is locked (Windows).
+    assert_eq!(libraries(&app.dir.path().join("plugins")), Vec::<PathBuf>::new());
 }
 
 #[tokio::test]
@@ -109,8 +128,11 @@ async fn loads_plugins_from_the_plugin_directory_on_start() {
     let plugins = app.dir.path().join("plugins");
     std::fs::copy(&library, plugins.join(library.file_name().unwrap())).unwrap();
     std::fs::write(plugins.join("legacy.jar"), b"PK").unwrap();
+    let removed = plugins.join("old.dll.deleted");
+    std::fs::write(&removed, b"left behind by a deletion").unwrap();
 
     app.restart();
+    assert!(!removed.exists(), "files of deleted plugins are cleaned up at start");
     let names: Vec<Value> = app
         .get("/api/v1/plugin")
         .await
