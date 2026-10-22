@@ -130,7 +130,7 @@ kill -TERM "$(cat logmaker.pid)"   # graceful stop; the PID file is removed on e
 
 Build as above; the server is `target\release\logmaker.exe`. `--daemon` is not available on Windows: run it in a console window, where Ctrl+C or closing the window stops it gracefully. `script\startup.cmd` starts it in a new window with `data`, `plugins`, and `logs` next to the executable; if startup fails, the window stays open with the error.
 
-Plugins are `.dll` files. Windows locks loaded DLLs, so deleting a plugin renames its file to `*.deleted`, which is removed at the next start.
+Plugins are `.dll` files. Windows keeps loaded DLLs open, so a deleted plugin's file disappears from the plugin directory when the server exits (if Windows refuses even that, it is renamed to `*.deleted` and removed at the next start). The plugin itself is unregistered immediately.
 
 ### Development Mode
 

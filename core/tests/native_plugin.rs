@@ -117,8 +117,13 @@ async fn uploads_and_uses_a_native_plugin() {
     let (_, body) = app.delete("/api/v1/plugin/sample-plugin").await;
     assert_eq!(body["message"], "Successfully deleted plugin");
     assert!(app.get("/api/v1/maker").await.as_array().unwrap().is_empty());
-    // Deleted, or renamed to *.deleted where the loaded file is locked (Windows).
-    assert_eq!(libraries(&app.dir.path().join("plugins")), Vec::<PathBuf>::new());
+    // Gone, or renamed to *.deleted. On Windows a loaded DLL stays listed as
+    // "delete pending" until the process exits, but can no longer be opened.
+    let remaining: Vec<PathBuf> = libraries(&app.dir.path().join("plugins"))
+        .into_iter()
+        .filter(|path| std::fs::File::open(path).is_ok())
+        .collect();
+    assert_eq!(remaining, Vec::<PathBuf>::new());
 }
 
 #[tokio::test]

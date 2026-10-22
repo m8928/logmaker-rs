@@ -16,8 +16,8 @@ use parking_lot::RwLock;
 /// File extensions accepted as plugin libraries.
 pub const LIBRARY_EXTENSIONS: [&str; 3] = ["so", "dylib", "dll"];
 
-/// Extension added to plugin files that could not be deleted because they are
-/// loaded (Windows locks loaded DLLs). They are deleted at the next start.
+/// Extension added to plugin files that could not be deleted (e.g. a loaded
+/// DLL on Windows). They are deleted at the next start.
 const DELETED_EXTENSION: &str = "deleted";
 
 struct LoadedPlugin {
@@ -93,7 +93,8 @@ fn find_sender(plugins: &[LoadedPlugin], type_name: &str) -> Option<(String, Arc
     })
 }
 
-/// Deletes a plugin library. A loaded DLL cannot be deleted on Windows, so it
+/// Deletes a plugin library. On Windows a loaded DLL is only marked for
+/// deletion and disappears when the server exits; if even that is refused, it
 /// is renamed to `*.deleted` and deleted at the next start instead.
 fn remove_library_file(path: &Path) -> Result<(), String> {
     let Err(error) = fs::remove_file(path) else {
