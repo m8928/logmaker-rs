@@ -72,6 +72,8 @@ fn init_logging(log_dir: &Path, console: bool) -> Option<tracing_appender::non_b
             .with_filter(filter())
     });
     let appender = (!log_dir.as_os_str().is_empty()).then(|| {
+        // The appender prunes old files before it creates the directory.
+        let _ = std::fs::create_dir_all(log_dir);
         tracing_appender::rolling::Builder::new()
             .rotation(tracing_appender::rolling::Rotation::DAILY)
             .filename_prefix("logmaker")

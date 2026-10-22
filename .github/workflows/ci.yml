@@ -103,6 +103,7 @@ jobs:
         run: |
           & target\release\logmaker.exe --daemon
           if ($LASTEXITCODE -ne 1) { throw "--daemon should be refused on Windows" }
+          $global:LASTEXITCODE = 0
           $server = Start-Process -FilePath target\release\logmaker.exe -PassThru -NoNewWindow `
             -ArgumentList '--port','19999','--data-root','smoke\data','--plugin-root','smoke\plugins','--log-dir','smoke\logs'
           $up = $false
@@ -114,6 +115,7 @@ jobs:
           Stop-Process -Id $server.Id
           if (-not $up -or $ui -ne 200) { Get-Content smoke\logs\*; throw "server did not start" }
           "health UP, UI $ui"
+          Get-Content smoke\logs\*.log | Select-Object -First 3
 
       - uses: actions/upload-artifact@v4
         with:
