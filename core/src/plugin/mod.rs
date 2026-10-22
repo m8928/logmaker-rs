@@ -222,12 +222,11 @@ impl PluginManager {
             let info = plugin.info.clone();
             self.add(plugin).map(|()| info)
         });
+        // The library may already be loaded (e.g. a duplicate id), which keeps
+        // the file locked on Windows.
         if result.is_err() {
-            if let Err(e) = fs::remove_file(&path) {
-                tracing::error!(
-                    "failed to delete plugin file {} after upload failure: {e}",
-                    path.display()
-                );
+            if let Err(e) = remove_library_file(&path) {
+                tracing::error!("failed to delete plugin file after upload failure: {e}");
             }
         }
         result
