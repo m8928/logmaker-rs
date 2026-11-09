@@ -23,7 +23,7 @@ struct Cli {
     bind: IpAddr,
 
     /// HTTP port.
-    #[arg(long, env = "LOGMAKER_PORT", default_value_t = 19999, alias = "server.port")]
+    #[arg(long, env = "LOGMAKER_PORT", default_value_t = 19999, alias = "server.port", value_parser = parse_port)]
     port: u16,
 
     /// Directory for maker/sender/log/scenario definitions [default: ~/.logmaker-data].
@@ -47,6 +47,17 @@ struct Cli {
     /// second daemon using the same file is refused.
     #[arg(long, env = "LOGMAKER_PID_FILE", default_value = "logmaker.pid")]
     pid_file: PathBuf,
+}
+
+/// Port number. Explains the value Kubernetes puts in `LOGMAKER_PORT` when a
+/// Service named `logmaker` exists (`tcp://<cluster ip>:<port>`).
+fn parse_port(value: &str) -> Result<u16, String> {
+    if value.starts_with("tcp://") {
+        return Err("this is a Kubernetes service link variable; \
+             set `enableServiceLinks: false` in the pod spec or set LOGMAKER_PORT explicitly"
+            .into());
+    }
+    value.parse().map_err(|e| format!("{e}"))
 }
 
 /// Like the default path parser, but allows an empty value.

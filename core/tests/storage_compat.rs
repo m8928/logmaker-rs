@@ -196,3 +196,23 @@ async fn written_files_only_use_fields_known_to_the_java_edition() {
     assert!(keys(&scenarios).is_subset(&java_scenario));
     assert!(keys(scenarios[0]["steps"].as_array().unwrap()).is_subset(&java_step));
 }
+
+#[cfg(unix)]
+#[test]
+fn refuses_to_start_with_a_read_only_data_root() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let dir = tempfile::tempdir().unwrap();
+    let data = dir.path().join("data");
+    std::fs::create_dir(&data).unwrap();
+    std::fs::set_permissions(&data, std::fs::Permissions::from_mode(0o555)).unwrap();
+    if std::fs::File::create(data.join("probe")).is_ok() {
+        return; // Running as root, which ignores permissions.
+    }
+    let config = logmaker_core::Config {
+        data_root: data,
+        plugin_root: dir.path().join("plugins"),
+    };
+    let error = logmaker_core::AppState::start(&config).err().expect("startup fails");
+    assert!(format!("{error:#}").contains("is not writable"), "{error:#}");
+}

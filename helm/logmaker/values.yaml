@@ -1,9 +1,23 @@
-replicaCount: 1
-
 image:
-  repository: logmaker
+  repository: logmaker  # registry image the cluster can pull, e.g. registry.example.com/logmaker
   tag: latest
   pullPolicy: Always
+
+imagePullSecrets: []
+
+# The image runs as UID/GID 10001; fsGroup makes the volumes writable for it.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  fsGroupChangePolicy: OnRootMismatch
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
 
 service:
   type: ClusterIP
@@ -36,6 +50,9 @@ persistence:
 
 # Log filter passed as RUST_LOG, e.g. "info" or "info,logmaker::debug_sender=warn".
 logLevel: info
+
+# Time zone (TZ) for generated timestamps, e.g. Asia/Seoul. Empty: UTC.
+timezone: ""
 
 nodeSelector: {}
 tolerations: []

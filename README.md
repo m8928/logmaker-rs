@@ -246,13 +246,37 @@ See [plugin.md](./plugin.md) for the plugin development guide.
 
 ## Deployment
 
-Deployment assets are included for container and Kubernetes environments:
+`script/startup.sh` starts the binary in daemon mode with `./data`, `./plugins`, `./logs`, and `logmaker.pid` next to it (extra options via `LOGMAKER_OPTS`); `script/shutdown.sh` stops it and waits until it has exited. On Windows, use `script/startup.cmd` instead.
 
-- [Dockerfile](./Dockerfile)
-- [k8s](./k8s)
-- [helm/logmaker](./helm/logmaker)
+### Docker
 
-On Windows, use `script/startup.cmd` instead. `script/startup.sh` starts the binary in daemon mode with `./data`, `./plugins`, `./logs`, and `logmaker.pid` next to it (extra options via `LOGMAKER_OPTS`); `script/shutdown.sh` stops it and waits until it has exited.
+```bash
+docker build -t logmaker .        # on Apple silicon, add --platform linux/amd64 for x86-64 hosts
+docker run -d -p 19999:19999 -v logmaker-data:/app/data -v logmaker-plugins:/app/plugins logmaker
+```
+
+The image runs as UID/GID 10001, logs to stdout only (set `LOGMAKER_LOG_DIR` for files), and uses UTC unless `TZ` is set (e.g. `-e TZ=Asia/Seoul`). Plugins must be Linux builds for the image's architecture.
+
+### Kubernetes
+
+Push the image to a registry the cluster can pull from, then deploy with either:
+
+```bash
+# Manifests (namespace logmaker): set the image in k8s/kustomization.yaml first
+kubectl apply -k k8s/
+
+# Helm
+helm install logmaker helm/logmaker -n logmaker --create-namespace \
+  --set image.repository=registry.example.com/logmaker --set image.tag=3.0.0 \
+  --set timezone=Asia/Seoul
+```
+
+- **One pod.** The server keeps its state in memory and in the data volume, so the Deployment runs a single replica with the `Recreate` strategy.
+- **Volumes.** `data` holds the definitions and `plugins` the uploaded plugins (both ReadWriteOnce PVCs). `fsGroup: 10001` makes them writable for the image's user; startup fails with "data root … is not writable" otherwise.
+- **Plugins.** Upload them on the Plugin page; they are stored in the plugins volume and survive restarts.
+- **Access.** `kubectl -n logmaker port-forward svc/logmaker 19999`, or enable the Ingress (`ingress.yaml` in the kustomization, or `--set ingress.enabled=true --set ingress.host=…`).
+- **Service links** are disabled (`enableServiceLinks: false`): otherwise Kubernetes sets `LOGMAKER_PORT=tcp://…` in pods when a Service named `logmaker` exists, and the server would take it as its port. Keep this setting in your own manifests.
+- Shutdown on SIGTERM is graceful: running logs and scenarios stop and senders close before the pod exits.
 
 ## License
 

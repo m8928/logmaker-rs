@@ -1,0 +1,15 @@
+# kubectl apply -k k8s/
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  - pvc.yaml
+  - deployment.yaml
+  - service.yaml
+  # - ingress.yaml  # nginx Ingress; set the host first
+
+images:
+  - name: logmaker
+    newName: logmaker  # ← 레지스트리 이미지로 변경 (예: registry.example.com/logmaker)
+    newTag: latest

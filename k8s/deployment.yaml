@@ -6,7 +6,12 @@ metadata:
   labels:
     app: logmaker
 spec:
+  # One instance only: the server keeps its state in memory and in the data
+  # volume. Recreate stops the old pod before starting the new one, so two
+  # pods never write the data files or wait on the same ReadWriteOnce volume.
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: logmaker
@@ -15,16 +20,34 @@ spec:
       labels:
         app: logmaker
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        # Makes the volumes writable for the image's user.
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+      # Otherwise a Service named logmaker sets LOGMAKER_PORT=tcp://… in the pod,
+      # which the server would read as its port.
+      enableServiceLinks: false
       containers:
         - name: logmaker
-          image: logmaker:latest
+          image: logmaker:latest  # set in kustomization.yaml
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
           ports:
             - containerPort: 19999
               name: http
           env:
             - name: RUST_LOG
               value: info
+            # Time zone for generated timestamps (default UTC).
+            # - name: TZ
+            #   value: Asia/Seoul
           volumeMounts:
             - name: data
               mountPath: /app/data

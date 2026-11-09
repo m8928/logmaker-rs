@@ -74,6 +74,10 @@ impl AppState {
         for dir in [&config.data_root, &config.plugin_root] {
             std::fs::create_dir_all(dir).with_context(|| format!("cannot create {}", dir.display()))?;
         }
+        // Fail at startup rather than on the first save, e.g. when a mounted
+        // volume belongs to another user.
+        tempfile::tempfile_in(&config.data_root)
+            .with_context(|| format!("data root {} is not writable", config.data_root.display()))?;
         let plugins = Arc::new(PluginManager::new(config.plugin_root.clone()));
         for definition in std::iter::once(logmaker_default_plugin::definition()).chain(extra) {
             plugins.register(definition).map_err(anyhow::Error::msg)?;

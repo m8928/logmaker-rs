@@ -122,3 +122,37 @@ jobs:
           name: logmaker-windows-x86_64
           path: target/release/logmaker.exe
           retention-days: 14
+
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Kubernetes manifests and Helm chart
+        run: |
+          kubectl kustomize k8s > /dev/null
+          helm lint helm/logmaker
+          helm template logmaker helm/logmaker --set timezone=Asia/Seoul > /dev/null
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: logmaker:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test
+        run: |
+          docker run -d --name logmaker -p 19999:19999 logmaker:ci
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:19999/actuator/health && break; sleep 1; done
+          curl -sf http://127.0.0.1:19999/actuator/health | grep -q '"UP"'
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:19999/)" = 200
+          test "$(docker exec logmaker id -u)" = 10001
+          docker stop logmaker
+          docker logs logmaker
+          docker logs logmaker 2>&1 | grep -q 'shutting down'

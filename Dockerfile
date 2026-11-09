@@ -39,21 +39,24 @@ LABEL maintainer="LogMaker" \
 
 WORKDIR /app
 
-# Create least-privilege runtime user and writable directories
-RUN groupadd --system logmaker \
-    && useradd --system --gid logmaker --home-dir /app --shell /usr/sbin/nologin logmaker \
-    && mkdir -p /app/data /app/plugins /app/logs \
+# Least-privilege runtime user. The fixed numeric UID/GID lets Kubernetes
+# check runAsNonRoot and grant volume access with fsGroup: 10001.
+RUN groupadd --gid 10001 logmaker \
+    && useradd --uid 10001 --gid logmaker --home-dir /app --no-create-home --shell /usr/sbin/nologin logmaker \
+    && mkdir -p /app/data /app/plugins \
     && chown -R logmaker:logmaker /app
 
-COPY --from=builder --chown=logmaker:logmaker /app/target/release/logmaker /app/logmaker
+COPY --from=builder /app/target/release/logmaker /app/logmaker
 
+# Logs go to stdout only (docker logs / kubectl logs); set LOGMAKER_LOG_DIR
+# to also write daily files.
 ENV LOGMAKER_DATA_ROOT=/app/data \
     LOGMAKER_PLUGIN_ROOT=/app/plugins \
-    LOGMAKER_LOG_DIR=/app/logs \
+    LOGMAKER_LOG_DIR="" \
     RUST_LOG=info
 
 EXPOSE 19999
 
-USER logmaker
+USER 10001:10001
 
 ENTRYPOINT ["/app/logmaker"]
