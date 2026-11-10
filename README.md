@@ -266,10 +266,10 @@ The image runs as UID/GID 10001, logs to stdout only (set `LOGMAKER_LOG_DIR` for
 The Helm chart is published to GHCR for each release (Helm 3.8 or later); a chart deploys the image of its own version:
 
 ```bash
-helm install logmaker oci://ghcr.io/m8928/charts/logmaker --version 3.0.2 \
+helm install logmaker oci://ghcr.io/m8928/charts/logmaker --version 3.0.3 \
   -n logmaker --create-namespace --set timezone=Asia/Seoul
 
-helm show values oci://ghcr.io/m8928/charts/logmaker --version 3.0.2   # all options
+helm show values oci://ghcr.io/m8928/charts/logmaker --version 3.0.3   # all options
 ```
 
 The chart is also in [helm/logmaker](./helm/logmaker), and the plain manifests in [k8s](./k8s) deploy `latest` (set the tag in `k8s/kustomization.yaml`):

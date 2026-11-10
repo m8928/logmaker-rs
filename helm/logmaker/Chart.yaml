@@ -3,8 +3,8 @@ name: logmaker
 description: LogMaker — Log Generation & Delivery Platform
 type: application
 # Same as the server version; the chart deploys the image of its appVersion.
-version: 3.0.2
-appVersion: "3.0.2"
+version: 3.0.3
+appVersion: "3.0.3"
 home: https://github.com/m8928/logmaker-rs
 sources:
   - https://github.com/m8928/logmaker-rs
