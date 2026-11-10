@@ -33,7 +33,7 @@ spec:
       containers:
         - name: logmaker
           image: logmaker:latest  # set in kustomization.yaml
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

@@ -5,6 +5,8 @@
 # Stage 3: Minimal runtime
 #
 # Build: docker buildx build --platform linux/amd64 -t logmaker .
+#        Platforms: linux/amd64, linux/arm64 (the server is cross-compiled, so
+#        either builds quickly on any host)
 # Run:   docker run -p 19999:19999 logmaker
 # ============================================================
 
@@ -19,7 +21,26 @@ COPY ui ./
 RUN npm run build
 
 # ── Stage 2: Server ─────────────────────────────────────────
-FROM rust:1.90-bookworm AS builder
+# Runs on the build machine and cross-compiles for the target platform,
+# which is much faster than compiling under emulation.
+FROM --platform=$BUILDPLATFORM rust:1.90-bookworm AS builder
+
+ARG BUILDARCH
+ARG TARGETARCH
+RUN set -eu; \
+    case "$TARGETARCH" in \
+      amd64) triple=x86_64-unknown-linux-gnu; gnu=x86_64-linux-gnu ;; \
+      arm64) triple=aarch64-unknown-linux-gnu; gnu=aarch64-linux-gnu ;; \
+      *) echo "unsupported platform: $TARGETARCH" >&2; exit 1 ;; \
+    esac; \
+    if [ "$TARGETARCH" != "$BUILDARCH" ]; then \
+      apt-get update; \
+      apt-get install -y --no-install-recommends "gcc-$(echo "$gnu" | tr _ -)" "libc6-dev-$TARGETARCH-cross"; \
+      rm -rf /var/lib/apt/lists/*; \
+      rustup target add "$triple"; \
+      printf '[target.%s]\nlinker = "%s-gcc"\n' "$triple" "$gnu" >> "$CARGO_HOME/config.toml"; \
+    fi; \
+    echo "$triple" > /target
 
 WORKDIR /app
 COPY Cargo.toml Cargo.lock rustfmt.toml ./
@@ -29,7 +50,8 @@ COPY core core
 COPY examples examples
 COPY --from=ui /app/core/static core/static
 
-RUN cargo build --release --locked -p logmaker-core
+RUN cargo build --release --locked -p logmaker-core --target "$(cat /target)" \
+    && cp "target/$(cat /target)/release/logmaker" /logmaker
 
 # ── Stage 3: Runtime ────────────────────────────────────────
 FROM debian:bookworm-slim
@@ -46,7 +68,7 @@ RUN groupadd --gid 10001 logmaker \
     && mkdir -p /app/data /app/plugins \
     && chown -R logmaker:logmaker /app
 
-COPY --from=builder /app/target/release/logmaker /app/logmaker
+COPY --from=builder /logmaker /app/logmaker
 
 # Logs go to stdout only (docker logs / kubectl logs); set LOGMAKER_LOG_DIR
 # to also write daily files.

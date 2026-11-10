@@ -1,5 +1,6 @@
 image:
-  repository: logmaker  # registry image the cluster can pull, e.g. registry.example.com/logmaker
+  repository: ghcr.io/m8928/logmaker-rs
+  # latest (main), a release such as 3.0.0, or a commit such as sha-5987f8a
   tag: latest
   pullPolicy: Always
 

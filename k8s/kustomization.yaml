@@ -11,5 +11,5 @@ resources:
 
 images:
   - name: logmaker
-    newName: logmaker  # ← 레지스트리 이미지로 변경 (예: registry.example.com/logmaker)
-    newTag: latest
+    newName: ghcr.io/m8928/logmaker-rs
+    newTag: latest  # or a release such as 3.0.0, or a commit such as sha-5987f8a

@@ -250,25 +250,27 @@ See [plugin.md](./plugin.md) for the plugin development guide.
 
 ### Docker
 
+Images for linux/amd64 and linux/arm64 are published to `ghcr.io/m8928/logmaker-rs`: `latest` follows `main`, `sha-<commit>` pins a commit, and release tags `vX.Y.Z` publish `X.Y.Z` and `X.Y`.
+
 ```bash
-docker build -t logmaker .        # on Apple silicon, add --platform linux/amd64 for x86-64 hosts
-docker run -d -p 19999:19999 -v logmaker-data:/app/data -v logmaker-plugins:/app/plugins logmaker
+docker run -d -p 19999:19999 -v logmaker-data:/app/data -v logmaker-plugins:/app/plugins \
+  ghcr.io/m8928/logmaker-rs
+
+docker build -t logmaker .        # build it yourself; --platform linux/amd64 or linux/arm64
 ```
 
 The image runs as UID/GID 10001, logs to stdout only (set `LOGMAKER_LOG_DIR` for files), and uses UTC unless `TZ` is set (e.g. `-e TZ=Asia/Seoul`). Plugins must be Linux builds for the image's architecture.
 
 ### Kubernetes
 
-Push the image to a registry the cluster can pull from, then deploy with either:
+Both deploy the GHCR image (`latest`; set another tag in `k8s/kustomization.yaml` or with `--set image.tag=…`):
 
 ```bash
-# Manifests (namespace logmaker): set the image in k8s/kustomization.yaml first
+# Manifests (namespace logmaker)
 kubectl apply -k k8s/
 
 # Helm
-helm install logmaker helm/logmaker -n logmaker --create-namespace \
-  --set image.repository=registry.example.com/logmaker --set image.tag=3.0.0 \
-  --set timezone=Asia/Seoul
+helm install logmaker helm/logmaker -n logmaker --create-namespace --set timezone=Asia/Seoul
 ```
 
 - **One pod.** The server keeps its state in memory and in the data volume, so the Deployment runs a single replica with the `Recreate` strategy.

@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [ main ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
 
@@ -123,8 +124,13 @@ jobs:
           path: target/release/logmaker.exe
           retention-days: 14
 
+  # Builds and smoke-tests the image; pushes to main and v* tags also publish
+  # it to ghcr.io/<owner>/<repo> for linux/amd64 and linux/arm64.
   docker:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - uses: actions/checkout@v4
@@ -156,3 +162,40 @@ jobs:
           docker stop logmaker
           docker logs logmaker
           docker logs logmaker 2>&1 | grep -q 'shutting down'
+
+      - name: Image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          # latest: main; 3.0.0 and 3.0: tag v3.0.0; sha-<commit>: every push
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+          flavor: latest=false
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The runtime stage of the arm64 image runs under emulation.
+      - uses: docker/setup-qemu-action@v3
+        if: github.event_name == 'push'
+
+      - name: Publish image
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
