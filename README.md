@@ -263,18 +263,23 @@ The image runs as UID/GID 10001, logs to stdout only (set `LOGMAKER_LOG_DIR` for
 
 ### Kubernetes
 
-Both deploy the GHCR image (`latest`; set another tag in `k8s/kustomization.yaml` or with `--set image.tag=…`):
+The Helm chart is published to GHCR for each release (Helm 3.8 or later); a chart deploys the image of its own version:
 
 ```bash
-# Manifests (namespace logmaker)
-kubectl apply -k k8s/
+helm install logmaker oci://ghcr.io/m8928/charts/logmaker --version 3.0.2 \
+  -n logmaker --create-namespace --set timezone=Asia/Seoul
 
-# Helm
-helm install logmaker helm/logmaker -n logmaker --create-namespace --set timezone=Asia/Seoul
+helm show values oci://ghcr.io/m8928/charts/logmaker --version 3.0.2   # all options
+```
+
+The chart is also in [helm/logmaker](./helm/logmaker), and the plain manifests in [k8s](./k8s) deploy `latest` (set the tag in `k8s/kustomization.yaml`):
+
+```bash
+kubectl apply -k k8s/   # namespace logmaker
 ```
 
 - **One pod.** The server keeps its state in memory and in the data volume, so the Deployment runs a single replica with the `Recreate` strategy.
-- **Volumes.** `data` holds the definitions and `plugins` the uploaded plugins (both ReadWriteOnce PVCs). `fsGroup: 10001` makes them writable for the image's user; startup fails with "data root … is not writable" otherwise.
+- **Volumes.** `data` holds the definitions and `plugins` the uploaded plugins (both ReadWriteOnce PVCs). `fsGroup: 10001` makes them writable for the image's user; startup fails with "data root … is not writable" otherwise. `helm uninstall` keeps both PVCs, so a reinstall with the same release name finds its data; delete them with `kubectl -n logmaker delete pvc logmaker-data logmaker-plugins`.
 - **Plugins.** Upload them on the Plugin page; they are stored in the plugins volume and survive restarts.
 - **Access.** `kubectl -n logmaker port-forward svc/logmaker 19999`, or enable the Ingress (`ingress.yaml` in the kustomization, or `--set ingress.enabled=true --set ingress.host=…`).
 - **Service links** are disabled (`enableServiceLinks: false`): otherwise Kubernetes sets `LOGMAKER_PORT=tcp://…` in pods when a Service named `logmaker` exists, and the server would take it as its port. Keep this setting in your own manifests.

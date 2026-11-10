@@ -2,5 +2,9 @@ apiVersion: v2
 name: logmaker
 description: LogMaker — Log Generation & Delivery Platform
 type: application
-version: 1.1.1
-appVersion: "3.0.1"
+# Same as the server version; the chart deploys the image of its appVersion.
+version: 3.0.2
+appVersion: "3.0.2"
+home: https://github.com/m8928/logmaker-rs
+sources:
+  - https://github.com/m8928/logmaker-rs

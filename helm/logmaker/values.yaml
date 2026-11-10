@@ -1,8 +1,8 @@
 image:
   repository: ghcr.io/m8928/logmaker-rs
-  # latest (main), a release such as 3.0.0, or a commit such as sha-5987f8a
-  tag: latest
-  pullPolicy: Always
+  # Empty: the chart's appVersion. Or latest (main), or a commit such as sha-5987f8a.
+  tag: ""
+  pullPolicy: IfNotPresent
 
 imagePullSecrets: []
 

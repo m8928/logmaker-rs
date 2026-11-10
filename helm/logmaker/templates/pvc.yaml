@@ -5,6 +5,9 @@ metadata:
   name: {{ .Release.Name }}-data
   labels:
     app: {{ .Release.Name }}
+  # Kept on helm uninstall, so definitions survive a reinstall.
+  annotations:
+    helm.sh/resource-policy: keep
 spec:
   accessModes:
     - ReadWriteOnce
@@ -23,6 +26,8 @@ metadata:
   name: {{ .Release.Name }}-plugins
   labels:
     app: {{ .Release.Name }}
+  annotations:
+    helm.sh/resource-policy: keep
 spec:
   accessModes:
     - ReadWriteOnce
