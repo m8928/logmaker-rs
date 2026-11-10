@@ -99,6 +99,16 @@ jobs:
       - name: Build Server
         run: cargo build --release --locked -p logmaker-core
 
+      # The C runtime is linked statically (.cargo/config.toml), so the server
+      # runs without the Visual C++ Redistributable.
+      - name: Check runtime dependencies
+        shell: bash
+        run: |
+          if grep -a -i -q vcruntime140 target/release/logmaker.exe; then
+            echo "logmaker.exe imports VCRUNTIME140.dll" >&2
+            exit 1
+          fi
+
       - name: Smoke test
         shell: pwsh
         run: |
