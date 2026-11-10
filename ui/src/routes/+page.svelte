@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { api } from '$lib/api';
 	import type { DashboardData, Log, Scenario } from '$lib/types';
 
@@ -24,7 +25,9 @@
 		}
 	}
 
-	$effect(() => {
+	// onMount, not $effect: fetchData reads `data`, so an effect would rerun
+	// (and fetch again) after every response.
+	onMount(() => {
 		fetchData();
 		const fetchInterval = setInterval(fetchData, 5000);
 		const clockInterval = setInterval(() => {
