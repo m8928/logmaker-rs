@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { api, readJsonResponse, unwrapApiResult, apiFetch } from '$lib/api';
+	import { pageTitle } from '$lib/stores/instance.svelte';
 	import DynamicInput from '$lib/components/DynamicInput.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import Select from '$lib/components/Select.svelte';
@@ -259,7 +260,7 @@
 	});
 </script>
 
-<svelte:head><title>Sender — LogMaker</title></svelte:head>
+<svelte:head><title>{pageTitle('Sender')}</title></svelte:head>
 
 <div class="page">
 	<header class="page-header">

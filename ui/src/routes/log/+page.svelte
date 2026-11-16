@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { api, readJsonResponse, unwrapApiResult, apiFetch } from '$lib/api';
+	import { pageTitle } from '$lib/stores/instance.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import Tooltip from '$lib/components/Tooltip.svelte';
 	import { nameError } from '$lib/names';
@@ -631,7 +632,7 @@
 </script>
 
 <svelte:window onresize={onResize} onclick={handleRateClickOutside} />
-<svelte:head><title>Log — LogMaker</title></svelte:head>
+<svelte:head><title>{pageTitle('Log')}</title></svelte:head>
 
 <div class="page">
 	<header class="page-header">

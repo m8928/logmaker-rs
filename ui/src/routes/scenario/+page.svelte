@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { api } from '$lib/api';
+	import { pageTitle } from '$lib/stores/instance.svelte';
 	import { nameError } from '$lib/names';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import Select from '$lib/components/Select.svelte';
@@ -437,7 +438,7 @@
 	});
 </script>
 
-<svelte:head><title>Scenario — LogMaker</title></svelte:head>
+<svelte:head><title>{pageTitle('Scenario')}</title></svelte:head>
 
 <div class="page">
 	<!-- PAGE HEADER -->

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api';
+	import { pageTitle } from '$lib/stores/instance.svelte';
 	import type { DashboardData, Log, Scenario } from '$lib/types';
 
 	let data = $state<DashboardData | null>(null);
@@ -147,7 +148,7 @@
 </script>
 
 <svelte:head>
-	<title>Dashboard — LogMaker</title>
+	<title>{pageTitle('Dashboard')}</title>
 </svelte:head>
 
 <div class="dash">

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { api, readJsonResponse, apiFetch } from '$lib/api';
+	import { pageTitle } from '$lib/stores/instance.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { addToast } from '$lib/stores/toast.svelte';
 	import type { ApiResult, Plugin } from '$lib/types';
@@ -114,7 +115,7 @@
 	});
 </script>
 
-<svelte:head><title>Plugin — LogMaker</title></svelte:head>
+<svelte:head><title>{pageTitle('Plugin')}</title></svelte:head>
 
 <div class="page">
 	<header class="page-header">

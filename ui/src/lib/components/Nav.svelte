@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { api, selectInstance, selectedInstance } from '$lib/api';
+	import { api } from '$lib/api';
 
 	let version = $state('');
 	let buildTime = $state('');
@@ -13,27 +13,6 @@
 		} catch { /* ignore */ }
 	}
 	fetchVersion();
-
-	// Instances this page can manage; the selector shows when there are several.
-	let instances = $state<string[]>([]);
-	let currentInstance = $state('');
-	let activeInstance = $state('');
-
-	async function fetchInstances() {
-		try {
-			const d = await api.getInstances();
-			const selected = selectedInstance();
-			if (selected && !d.instances.includes(selected)) {
-				// The selected instance is no longer configured.
-				selectInstance(d.current, d.current);
-				return;
-			}
-			instances = d.instances;
-			currentInstance = d.current;
-			activeInstance = selected || d.current;
-		} catch { /* ignore */ }
-	}
-	fetchInstances();
 
 	let isDark = $state(
 		typeof document !== 'undefined' && !document.documentElement.classList.contains('light')
@@ -97,22 +76,6 @@
 		</div>
 		<span class="nav-brand-text">LogMaker</span>
 	</div>
-
-	{#if instances.length > 1}
-		<div class="nav-instance">
-			<label class="instance-label" for="instance-select">Instance</label>
-			<select
-				id="instance-select"
-				class="instance-select"
-				value={activeInstance}
-				onchange={(e) => selectInstance(e.currentTarget.value, currentInstance)}
-			>
-				{#each instances as name}
-					<option value={name}>{name}</option>
-				{/each}
-			</select>
-		</div>
-	{/if}
 
 	<ul class="nav-items" role="list">
 		{#each navItems as item}
@@ -193,40 +156,6 @@
 		font-size: 0.9375rem;
 		letter-spacing: -0.02em;
 		color: var(--text-primary);
-	}
-
-	.nav-instance {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-		padding: 0.75rem 0.625rem 0;
-		flex-shrink: 0;
-	}
-
-	.instance-label {
-		padding: 0 0.75rem;
-		font-size: 0.625rem;
-		font-weight: 600;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		color: var(--text-muted);
-	}
-
-	.instance-select {
-		width: 100%;
-		padding: 0.4375rem 0.75rem;
-		border: 1px solid var(--border);
-		border-radius: var(--radius-sm);
-		background: var(--bg-raised);
-		color: var(--text-primary);
-		font-family: var(--font-mono);
-		font-size: 0.8125rem;
-		cursor: pointer;
-	}
-
-	.instance-select:focus-visible {
-		outline: 2px solid var(--border-focus);
-		outline-offset: 1px;
 	}
 
 	.nav-items {
@@ -351,22 +280,6 @@
 			border-right: 1px solid var(--border);
 			padding: 0 0.875rem;
 			flex-shrink: 0;
-		}
-
-		.nav-instance {
-			flex-direction: row;
-			align-items: center;
-			padding: 0 0.5rem;
-			border-right: 1px solid var(--border);
-		}
-
-		.instance-label {
-			display: none;
-		}
-
-		.instance-select {
-			width: auto;
-			max-width: 9rem;
 		}
 
 		.nav-items {

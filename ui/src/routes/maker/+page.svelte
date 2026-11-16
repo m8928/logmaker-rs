@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { api, readJsonResponse, unwrapApiResult, apiFetch } from '$lib/api';
+	import { pageTitle } from '$lib/stores/instance.svelte';
 	import DynamicInput from '$lib/components/DynamicInput.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import Select from '$lib/components/Select.svelte';
@@ -289,7 +290,7 @@
 	});
 </script>
 
-<svelte:head><title>Maker — LogMaker</title></svelte:head>
+<svelte:head><title>{pageTitle('Maker')}</title></svelte:head>
 
 <div class="page">
 	<header class="page-header">
