@@ -126,6 +126,16 @@ impl TestApp {
         }
     }
 
+    /// The app's router, e.g. to serve it over TCP.
+    pub fn router(&self) -> Router {
+        self.router.clone()
+    }
+
+    /// Wraps the router used by the request helpers.
+    pub fn wrap_router(&mut self, wrap: impl FnOnce(Router) -> Router) {
+        self.router = wrap(self.router.clone());
+    }
+
     /// Shuts the app down and starts a new one on the same directories.
     pub fn restart(&mut self) {
         self.state.shutdown();

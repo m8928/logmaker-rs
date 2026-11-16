@@ -17,6 +17,7 @@ logmaker-default-plugin.workspace = true
 anyhow.workspace = true
 axum.workspace = true
 clap.workspace = true
+hyper-util.workspace = true
 indexmap.workspace = true
 libloading.workspace = true
 mime_guess.workspace = true

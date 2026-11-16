@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { api, readJsonResponse, unwrapApiResult } from '$lib/api';
+	import { api, readJsonResponse, unwrapApiResult, apiFetch } from '$lib/api';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import Tooltip from '$lib/components/Tooltip.svelte';
 	import { nameError } from '$lib/names';
@@ -469,7 +469,7 @@
 		try {
 			const fd = new FormData();
 			fd.append('file', file);
-			const res = await fetch('/api/v1/log:import-file', { method: 'POST', body: fd });
+			const res = await apiFetch('/log:import-file', { method: 'POST', body: fd });
 			const result = await readJsonResponse<Array<ApiResult | { body?: ApiResult }>>(res, `Import failed (${res.status})`);
 			if (!res.ok) {
 				throw new Error(`Import failed (${res.status})`);

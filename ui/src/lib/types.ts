@@ -116,3 +116,9 @@ export interface Toast {
 	type: ToastType;
 	message: string;
 }
+
+/** Instances selectable in the UI (`GET /api/v1/instances`). */
+export interface Instances {
+	current: string;
+	instances: string[];
+}

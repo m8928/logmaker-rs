@@ -3,6 +3,7 @@
 
 mod api_result;
 mod dashboard;
+pub mod instances;
 mod log;
 mod maker;
 mod names;

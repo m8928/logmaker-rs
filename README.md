@@ -108,9 +108,23 @@ The UI is embedded at compile time; rebuild the server after rebuilding the UI. 
 | `--log-dir` | `LOGMAKER_LOG_DIR` | `logs` | Daily-rotated log files (30 kept); empty disables file logging |
 | `-d`, `--daemon` | | off | Run in the background (Unix); see below |
 | `--pid-file` | `LOGMAKER_PID_FILE` | `logmaker.pid` | PID file used in daemon mode |
+| `--instance-name` | `LOGMAKER_INSTANCE_NAME` | `local` | Name of this instance in the web UI's instance selector |
+| `--peers` | `LOGMAKER_PEERS` | | Other instances to manage from this web UI, as `name=http://host:port,...`; see below |
 | | `RUST_LOG` | `info` | Log filter, e.g. `info,logmaker::debug_sender=warn` |
 
 The Java-style flags `--server.port`, `--data.root`, and `--plugin.root` are accepted as aliases.
+
+### Managing Several Instances from One UI
+
+Each LogMaker instance keeps its own makers, senders, logs and scenarios. Give an instance a list of peers and its web UI shows an instance selector in the sidebar; API requests for a peer are forwarded to it over HTTP, so one address serves all of them:
+
+```bash
+./logmaker --instance-name a --peers a=http://10.0.0.1:19999,b=http://10.0.0.2:19999,c=http://10.0.0.3:19999
+```
+
+- The same peer list can be given to every instance; an entry for the instance itself is ignored.
+- The selection is per browser tab, so several tabs can show different instances.
+- Only the listed peers can be reached through an instance. LogMaker has no authentication, so expose it only on trusted networks.
 
 ### Daemon Mode
 
@@ -276,6 +290,17 @@ The chart is also in [helm/logmaker](./helm/logmaker), and the plain manifests i
 
 ```bash
 kubectl apply -k k8s/   # namespace logmaker
+```
+
+Several instances: install one release per instance with the same `peers` list, and expose one of them; its UI manages all of them.
+
+```bash
+for i in 1 2 3; do
+  helm install logmaker-$i oci://ghcr.io/m8928/charts/logmaker --version 3.1.0 -n logmaker \
+    --set 'peers={logmaker-1,logmaker-2,logmaker-3}' --set timezone=Asia/Seoul
+done
+helm upgrade logmaker-1 oci://ghcr.io/m8928/charts/logmaker --version 3.1.0 -n logmaker --reuse-values \
+  --set service.type=NodePort --set service.nodePort=31999   # http://<node>:31999
 ```
 
 - **One pod.** The server keeps its state in memory and in the data volume, so the Deployment runs a single replica with the `Recreate` strategy.

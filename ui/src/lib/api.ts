@@ -1,7 +1,28 @@
 import { addToast } from '$lib/stores/toast.svelte';
-import type { ApiResult, DashboardData, Log, Maker, Plugin, PluginType, Scenario, Sender } from '$lib/types';
+import type { ApiResult, DashboardData, Instances, Log, Maker, Plugin, PluginType, Scenario, Sender } from '$lib/types';
 
 const BASE = '/api/v1';
+const INSTANCE_KEY = 'logmaker-instance';
+
+/** Instance this tab manages; empty for the server that serves the page. */
+export function selectedInstance(): string {
+	return (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(INSTANCE_KEY)) || '';
+}
+
+/** Switches this tab to another instance and reloads the page. */
+export function selectInstance(name: string, current: string) {
+	if (name === current) sessionStorage.removeItem(INSTANCE_KEY);
+	else sessionStorage.setItem(INSTANCE_KEY, name);
+	location.reload();
+}
+
+/** fetch for an API path, sent to the selected instance (the server forwards it). */
+export function apiFetch(path: string, init?: RequestInit): Promise<Response> {
+	const headers = new Headers(init?.headers);
+	const instance = selectedInstance();
+	if (instance) headers.set('X-LogMaker-Instance', instance);
+	return fetch(`${BASE}${path}`, { ...init, headers });
+}
 
 function statusMessage(res: Response): string {
 	return `Request failed with status ${res.status}`;
@@ -35,9 +56,9 @@ export async function readJsonResponse<T>(res: Response, fallbackMessage: string
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
 	try {
-		const res = await fetch(`${BASE}${path}`, {
-			headers: { 'Content-Type': 'application/json', ...options?.headers },
-			...options
+		const res = await apiFetch(path, {
+			...options,
+			headers: { 'Content-Type': 'application/json', ...options?.headers }
 		});
 		let data: ApiResult;
 		try {
@@ -65,7 +86,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 async function fetchJson<T>(path: string): Promise<T> {
 	try {
-		const res = await fetch(`${BASE}${path}`);
+		const res = await apiFetch(path);
 		let data: T | ApiResult;
 		try {
 			data = await readJsonResponse<T | ApiResult>(res, `Failed to load data (${res.status})`);
@@ -90,6 +111,7 @@ async function fetchJson<T>(path: string): Promise<T> {
 export const api = {
 	// Dashboard
 	getDashboard: () => fetchJson<DashboardData>('/dashboard'),
+	getInstances: () => fetchJson<Instances>('/instances'),
 
 	// Makers
 	getMakers: () => fetchJson<Maker[]>('/maker'),

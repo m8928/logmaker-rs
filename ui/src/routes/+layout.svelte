@@ -11,7 +11,9 @@
 
 	async function checkHealth() {
 		try {
-			const res = await fetch('/api/v1/dashboard', { signal: AbortSignal.timeout(3000) });
+			// Health of the server serving this page, not of a selected peer
+			// instance, so the overlay never hides the instance selector.
+			const res = await fetch('/actuator/health', { signal: AbortSignal.timeout(3000) });
 			if (res.ok) {
 				if (serverDown) {
 					serverDown = false;

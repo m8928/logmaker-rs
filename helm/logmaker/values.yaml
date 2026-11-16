@@ -23,6 +23,8 @@ securityContext:
 service:
   type: ClusterIP
   port: 19999
+  # Fixed port (30000-32767) for type NodePort; empty: chosen by Kubernetes.
+  nodePort: null
 
 ingress:
   enabled: false
@@ -54,6 +56,12 @@ logLevel: info
 
 # Time zone (TZ) for generated timestamps, e.g. Asia/Seoul. Empty: UTC.
 timezone: ""
+
+# Other LogMaker releases in this namespace to manage from this release's web
+# UI (instance selector), e.g. [logmaker-1, logmaker-2, logmaker-3]. Listing
+# this release too is fine, so all releases can share one list. Entries can
+# also be name=http://host:port for instances elsewhere.
+peers: []
 
 nodeSelector: {}
 tolerations: []

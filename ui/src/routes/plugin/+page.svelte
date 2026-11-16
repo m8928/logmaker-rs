@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { api, readJsonResponse } from '$lib/api';
+	import { api, readJsonResponse, apiFetch } from '$lib/api';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { addToast } from '$lib/stores/toast.svelte';
 	import type { ApiResult, Plugin } from '$lib/types';
@@ -65,7 +65,7 @@
 		try {
 			const fd = new FormData();
 			fd.append('file', file);
-			const res = await fetch('/api/v1/plugin', { method: 'POST', body: fd });
+			const res = await apiFetch('/plugin', { method: 'POST', body: fd });
 			const result = await readJsonResponse<ApiResult>(res, `Upload failed (${res.status})`);
 			if (!res.ok || result.type === 'ERROR') {
 				addToast('error', result.message || `Upload failed (${res.status})`);

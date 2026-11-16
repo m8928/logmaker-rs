@@ -59,6 +59,12 @@ spec:
             - name: TZ
               value: {{ . | quote }}
             {{- end }}
+            - name: LOGMAKER_INSTANCE_NAME
+              value: {{ .Release.Name | quote }}
+            {{- if .Values.peers }}
+            - name: LOGMAKER_PEERS
+              value: {{ include "logmaker.peers" . | quote }}
+            {{- end }}
           volumeMounts:
             - name: data
               mountPath: /app/data

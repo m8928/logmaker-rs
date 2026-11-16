@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { api, readJsonResponse, unwrapApiResult } from '$lib/api';
+	import { api, readJsonResponse, unwrapApiResult, apiFetch } from '$lib/api';
 	import DynamicInput from '$lib/components/DynamicInput.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import Select from '$lib/components/Select.svelte';
@@ -197,7 +197,7 @@
 		try {
 			const formData = new FormData();
 			formData.append('file', file);
-			const res = await fetch('/api/v1/sender:import-file', { method: 'POST', body: formData });
+			const res = await apiFetch('/sender:import-file', { method: 'POST', body: formData });
 			const result = await readJsonResponse<Array<ApiResult | { body?: ApiResult }>>(res, `Import failed (${res.status})`);
 			if (!res.ok) {
 				throw new Error(`Import failed (${res.status})`);

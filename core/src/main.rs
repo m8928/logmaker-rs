@@ -7,6 +7,7 @@ use std::process::ExitCode;
 
 use anyhow::Context;
 use clap::Parser;
+use logmaker_core::instances::Instances;
 use logmaker_core::{AppState, Config, router};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -47,6 +48,15 @@ struct Cli {
     /// second daemon using the same file is refused.
     #[arg(long, env = "LOGMAKER_PID_FILE", default_value = "logmaker.pid")]
     pid_file: PathBuf,
+
+    /// Name of this instance in the web UI's instance selector.
+    #[arg(long, env = "LOGMAKER_INSTANCE_NAME", default_value = "local")]
+    instance_name: String,
+
+    /// Other instances to manage from this web UI, as comma-separated
+    /// name=http://host:port entries; their API requests are forwarded.
+    #[arg(long, env = "LOGMAKER_PEERS", default_value = "")]
+    peers: String,
 }
 
 /// Port number. Explains the value Kubernetes puts in `LOGMAKER_PORT` when a
@@ -190,6 +200,7 @@ fn main() -> ExitCode {
 }
 
 async fn serve(cli: Cli, startup: &mut Startup) -> anyhow::Result<()> {
+    let instances = Instances::new(&cli.instance_name, &cli.peers)?;
     let config = Config {
         data_root: cli.data_root.unwrap_or_else(|| home_dir().join(".logmaker-data")),
         plugin_root: cli.plugin_root.unwrap_or_else(|| home_dir().join(".logmaker-plugin")),
@@ -206,8 +217,12 @@ async fn serve(cli: Cli, startup: &mut Startup) -> anyhow::Result<()> {
         .await
         .with_context(|| format!("cannot listen on {address}"))?;
     tracing::info!("LogMaker {} listening on http://{address}", env!("CARGO_PKG_VERSION"));
+    let names = instances.names();
+    if names.len() > 1 {
+        tracing::info!("instance {} (instances: {})", cli.instance_name, names.join(", "));
+    }
     startup.ready();
-    axum::serve(listener, router(state.clone()))
+    axum::serve(listener, instances.serve(router(state.clone())))
         .with_graceful_shutdown(shutdown_signal())
         .await?;
 
