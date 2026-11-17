@@ -1,40 +1,43 @@
-{{- if .Values.persistence.data.enabled }}
+{{- range $name := include "logmaker.instances" . | fromJsonArray }}
+{{- if $.Values.persistence.data.enabled }}
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Release.Name }}-data
+  name: {{ $name }}-data
   labels:
-    app: {{ .Release.Name }}
+    app: {{ $name }}
   # Kept on helm uninstall, so definitions survive a reinstall.
   annotations:
     helm.sh/resource-policy: keep
 spec:
   accessModes:
     - ReadWriteOnce
-  {{- if .Values.persistence.data.storageClass }}
-  storageClassName: {{ .Values.persistence.data.storageClass | quote }}
+  {{- if $.Values.persistence.data.storageClass }}
+  storageClassName: {{ $.Values.persistence.data.storageClass | quote }}
   {{- end }}
   resources:
     requests:
-      storage: {{ .Values.persistence.data.size }}
+      storage: {{ $.Values.persistence.data.size }}
 {{- end }}
+{{- if $.Values.persistence.plugins.enabled }}
 ---
-{{- if .Values.persistence.plugins.enabled }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Release.Name }}-plugins
+  name: {{ $name }}-plugins
   labels:
-    app: {{ .Release.Name }}
+    app: {{ $name }}
   annotations:
     helm.sh/resource-policy: keep
 spec:
   accessModes:
     - ReadWriteOnce
-  {{- if .Values.persistence.plugins.storageClass }}
-  storageClassName: {{ .Values.persistence.plugins.storageClass | quote }}
+  {{- if $.Values.persistence.plugins.storageClass }}
+  storageClassName: {{ $.Values.persistence.plugins.storageClass | quote }}
   {{- end }}
   resources:
     requests:
-      storage: {{ .Values.persistence.plugins.size }}
+      storage: {{ $.Values.persistence.plugins.size }}
+{{- end }}
 {{- end }}

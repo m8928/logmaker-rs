@@ -1,0 +1,19 @@
+{{- $instances := include "logmaker.instances" . | fromJsonArray -}}
+LogMaker {{ .Chart.AppVersion }}: {{ len $instances }} instance(s) ({{ join ", " $instances }}).
+
+Web UI:
+{{- if eq .Values.service.type "NodePort" }}
+  NODE_PORT=$(kubectl get svc {{ .Release.Name }} -n {{ .Release.Namespace }} -o jsonpath='{.spec.ports[0].nodePort}')
+  echo "http://<node IP>:$NODE_PORT"
+{{- else if eq .Values.service.type "LoadBalancer" }}
+  kubectl get svc {{ .Release.Name }} -n {{ .Release.Namespace }}   # http://<EXTERNAL-IP>:{{ .Values.service.port }}
+{{- else if .Values.ingress.enabled }}
+  http://{{ .Values.ingress.host }}
+{{- else }}
+  kubectl port-forward svc/{{ .Release.Name }} -n {{ .Release.Namespace }} 19999:{{ .Values.service.port }}
+  # then http://localhost:19999
+{{- end }}
+{{- if gt (len $instances) 1 }}
+
+Switch between the instances at the top left of the web UI.
+{{- end }}

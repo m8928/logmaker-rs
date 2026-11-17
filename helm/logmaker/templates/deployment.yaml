@@ -1,40 +1,43 @@
+{{- $peers := include "logmaker.peers" . }}
+{{- range $name := include "logmaker.instances" . | fromJsonArray }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}
+  name: {{ $name }}
   labels:
-    app: {{ .Release.Name }}
+    app: {{ $name }}
 spec:
-  # One instance only: the server keeps its state in memory and in the data
-  # volume. Recreate stops the old pod before starting the new one.
+  # One pod per instance: the server keeps its state in memory and in its
+  # data volume. Recreate stops the old pod before starting the new one.
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: {{ .Release.Name }}
+      app: {{ $name }}
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}
+        app: {{ $name }}
     spec:
-      {{- with .Values.nodeSelector }}
+      {{- with $.Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.tolerations }}
+      {{- with $.Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with $.Values.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.imagePullSecrets }}
+      {{- with $.Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.podSecurityContext }}
+      {{- with $.Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -43,9 +46,9 @@ spec:
       enableServiceLinks: false
       containers:
         - name: logmaker
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- with .Values.securityContext }}
+          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          {{- with $.Values.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -54,16 +57,16 @@ spec:
               name: http
           env:
             - name: RUST_LOG
-              value: {{ .Values.logLevel | quote }}
-            {{- with .Values.timezone }}
+              value: {{ $.Values.logLevel | quote }}
+            {{- with $.Values.timezone }}
             - name: TZ
               value: {{ . | quote }}
             {{- end }}
             - name: LOGMAKER_INSTANCE_NAME
-              value: {{ .Release.Name | quote }}
-            {{- if .Values.peers }}
+              value: {{ $name | quote }}
+            {{- if contains "," $peers }}
             - name: LOGMAKER_PEERS
-              value: {{ include "logmaker.peers" . | quote }}
+              value: {{ $peers | quote }}
             {{- end }}
           volumeMounts:
             - name: data
@@ -71,7 +74,7 @@ spec:
             - name: plugins
               mountPath: /app/plugins
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml $.Values.resources | nindent 12 }}
           livenessProbe:
             httpGet:
               path: /actuator/health
@@ -86,16 +89,17 @@ spec:
             periodSeconds: 5
       volumes:
         - name: data
-          {{- if .Values.persistence.data.enabled }}
+          {{- if $.Values.persistence.data.enabled }}
           persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-data
+            claimName: {{ $name }}-data
           {{- else }}
           emptyDir: {}
           {{- end }}
         - name: plugins
-          {{- if .Values.persistence.plugins.enabled }}
+          {{- if $.Values.persistence.plugins.enabled }}
           persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-plugins
+            claimName: {{ $name }}-plugins
           {{- else }}
           emptyDir: {}
           {{- end }}
+{{- end }}

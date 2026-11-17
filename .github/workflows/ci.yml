@@ -150,8 +150,11 @@ jobs:
           kubectl kustomize k8s > /dev/null
           helm lint helm/logmaker
           helm template logmaker helm/logmaker --set timezone=Asia/Seoul > /dev/null
-          helm template logmaker-1 helm/logmaker --set 'peers={logmaker-1,logmaker-2}' \
+          helm template logmaker helm/logmaker --set instances=3 --set 'peers={other=http://10.0.0.1:19999}' \
             --set service.type=NodePort --set service.nodePort=31999 > /dev/null
+          helm template logmaker helm/logmaker --set 'instances={logmaker-1,logmaker-2}' > /dev/null
+          helm template logmaker helm/logmaker --set instances=null > /dev/null   # helm upgrade --reuse-values from 3.0
+          ! helm template logmaker helm/logmaker --set 'instances={a,a}' > /dev/null 2>&1
 
       # A release tag must match the server and chart versions, so the
       # published image, binaries, and chart agree.

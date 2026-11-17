@@ -815,7 +815,7 @@ checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
 
 [[package]]
 name = "logmaker-core"
-version = "3.0.3"
+version = "3.1.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -844,7 +844,7 @@ dependencies = [
 
 [[package]]
 name = "logmaker-default-plugin"
-version = "3.0.3"
+version = "3.1.0"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -865,7 +865,7 @@ dependencies = [
 
 [[package]]
 name = "logmaker-plugin-api"
-version = "3.0.3"
+version = "3.1.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -873,7 +873,7 @@ dependencies = [
 
 [[package]]
 name = "logmaker-sample-plugin"
-version = "3.0.3"
+version = "3.1.0"
 dependencies = [
  "logmaker-plugin-api",
 ]

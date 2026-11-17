@@ -280,10 +280,10 @@ The image runs as UID/GID 10001, logs to stdout only (set `LOGMAKER_LOG_DIR` for
 The Helm chart is published to GHCR for each release (Helm 3.8 or later); a chart deploys the image of its own version:
 
 ```bash
-helm install logmaker oci://ghcr.io/m8928/charts/logmaker --version 3.0.3 \
+helm install logmaker oci://ghcr.io/m8928/charts/logmaker --version 3.1.0 \
   -n logmaker --create-namespace --set timezone=Asia/Seoul
 
-helm show values oci://ghcr.io/m8928/charts/logmaker --version 3.0.3   # all options
+helm show values oci://ghcr.io/m8928/charts/logmaker --version 3.1.0   # all options
 ```
 
 The chart is also in [helm/logmaker](./helm/logmaker), and the plain manifests in [k8s](./k8s) deploy `latest` (set the tag in `k8s/kustomization.yaml`):
@@ -292,19 +292,15 @@ The chart is also in [helm/logmaker](./helm/logmaker), and the plain manifests i
 kubectl apply -k k8s/   # namespace logmaker
 ```
 
-Several instances: install one release per instance with the same `peers` list, and expose one of them; its UI manages all of them.
+Several instances: `instances` runs that many independent instances in one release, behind one address. Switch between them at the top left of the web UI; `helm install` prints how to find the address.
 
 ```bash
-for i in 1 2 3; do
-  helm install logmaker-$i oci://ghcr.io/m8928/charts/logmaker --version 3.1.0 -n logmaker \
-    --set 'peers={logmaker-1,logmaker-2,logmaker-3}' --set timezone=Asia/Seoul
-done
-helm upgrade logmaker-1 oci://ghcr.io/m8928/charts/logmaker --version 3.1.0 -n logmaker --reuse-values \
-  --set service.type=NodePort --set service.nodePort=31999   # http://<node>:31999
+helm install logmaker oci://ghcr.io/m8928/charts/logmaker --version 3.1.0 -n logmaker --create-namespace \
+  --set instances=3 --set service.type=NodePort --set timezone=Asia/Seoul
 ```
 
-- **One pod.** The server keeps its state in memory and in the data volume, so the Deployment runs a single replica with the `Recreate` strategy.
-- **Volumes.** `data` holds the definitions and `plugins` the uploaded plugins (both ReadWriteOnce PVCs). `fsGroup: 10001` makes them writable for the image's user; startup fails with "data root … is not writable" otherwise. `helm uninstall` keeps both PVCs, so a reinstall with the same release name finds its data; delete them with `kubectl -n logmaker delete pvc logmaker-data logmaker-plugins`.
+- **Instances.** Each instance is a Deployment with one pod (`Recreate` strategy), its own volumes and a ClusterIP Service, named `<release>`, `<release>-2`, `<release>-3`, ...; `instances={a,b,c}` names them explicitly. The Service `<release>` is the web UI's address; it reaches the first instance, which forwards requests for the others. Changing `instances` later adds or removes instances and keeps the data of the remaining ones.
+- **Volumes.** `data` holds the definitions and `plugins` the uploaded plugins (both ReadWriteOnce PVCs per instance). `fsGroup: 10001` makes them writable for the image's user; startup fails with "data root … is not writable" otherwise. `helm uninstall` keeps the PVCs, so a reinstall with the same names finds the data; delete them with `kubectl -n logmaker delete pvc <instance>-data <instance>-plugins`.
 - **Plugins.** Upload them on the Plugin page; they are stored in the plugins volume and survive restarts.
 - **Access.** `kubectl -n logmaker port-forward svc/logmaker 19999`, or enable the Ingress (`ingress.yaml` in the kustomization, or `--set ingress.enabled=true --set ingress.host=…`).
 - **Service links** are disabled (`enableServiceLinks: false`): otherwise Kubernetes sets `LOGMAKER_PORT=tcp://…` in pods when a Service named `logmaker` exists, and the server would take it as its port. Keep this setting in your own manifests.

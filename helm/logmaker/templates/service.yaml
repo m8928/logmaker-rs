@@ -1,13 +1,16 @@
+{{- $instances := include "logmaker.instances" . | fromJsonArray }}
+# The web UI's address, in front of the first instance; it forwards requests
+# for the other instances.
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Release.Name }}
   labels:
-    app: {{ .Release.Name }}
+    app: {{ first $instances }}
 spec:
   type: {{ .Values.service.type }}
   selector:
-    app: {{ .Release.Name }}
+    app: {{ first $instances }}
   ports:
     - port: {{ .Values.service.port }}
       targetPort: http
@@ -16,3 +19,24 @@ spec:
       {{- if and (eq .Values.service.type "NodePort") .Values.service.nodePort }}
       nodePort: {{ .Values.service.nodePort }}
       {{- end }}
+{{- range $name := $instances }}
+{{- if ne $name $.Release.Name }}
+---
+# Reaches instance {{ $name }} inside the cluster.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    app: {{ $name }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ $name }}
+  ports:
+    - port: {{ $.Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+{{- end }}
+{{- end }}

@@ -57,10 +57,14 @@ logLevel: info
 # Time zone (TZ) for generated timestamps, e.g. Asia/Seoul. Empty: UTC.
 timezone: ""
 
-# Other LogMaker releases in this namespace to manage from this release's web
-# UI (instance selector), e.g. [logmaker-1, logmaker-2, logmaker-3]. Listing
-# this release too is fine, so all releases can share one list. Entries can
-# also be name=http://host:port for instances elsewhere.
+# LogMaker instances, each with its own definitions and volumes, managed from
+# one web UI (switch at the top left). A count names them after the release:
+# <release>, <release>-2, <release>-3, ... A list names them explicitly, e.g.
+# [logmaker-1, logmaker-2, logmaker-3].
+instances: 1
+
+# More instances to manage from the web UI: other LogMaker releases in this
+# namespace (by name), or name=http://host:port entries.
 peers: []
 
 nodeSelector: {}
