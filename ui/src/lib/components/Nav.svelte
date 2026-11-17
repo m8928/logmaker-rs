@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { api } from '$lib/api';
+	import InstanceSwitcher from '$lib/components/InstanceSwitcher.svelte';
+	import { instances } from '$lib/stores/instance.svelte';
 
 	let version = $state('');
 	let buildTime = $state('');
@@ -68,13 +70,17 @@
 </script>
 
 <nav class="nav-sidebar" aria-label="Main navigation">
-	<div class="nav-brand">
+	<div class="nav-brand" class:switching={instances.multiple}>
 		<div class="brand-icon">
 			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" aria-hidden="true">
 				<polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
 			</svg>
 		</div>
-		<span class="nav-brand-text">LogMaker</span>
+		{#if instances.multiple}
+			<InstanceSwitcher />
+		{:else}
+			<span class="nav-brand-text">LogMaker</span>
+		{/if}
 	</div>
 
 	<ul class="nav-items" role="list">
@@ -131,6 +137,7 @@
 	}
 
 	.nav-brand {
+		position: relative;
 		display: flex;
 		align-items: center;
 		gap: 0.625rem;
@@ -273,6 +280,11 @@
 			padding: 0;
 			border-right: none;
 			border-bottom: 1px solid var(--border);
+		}
+
+		/* The instance switcher stands in for the logo in the narrow top bar. */
+		.nav-brand.switching .brand-icon {
+			display: none;
 		}
 
 		.nav-brand {

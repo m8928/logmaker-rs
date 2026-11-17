@@ -2,8 +2,7 @@
 	import '../app.css';
 	import Nav from '$lib/components/Nav.svelte';
 	import Toast from '$lib/components/Toast.svelte';
-	import { selectInstance } from '$lib/api';
-	import { instances, loadInstances } from '$lib/stores/instance.svelte';
+	import { loadInstances } from '$lib/stores/instance.svelte';
 
 	let { children } = $props();
 	// Theme is applied in app.html inline script (before render) to prevent FOUC
@@ -16,7 +15,7 @@
 	async function checkHealth() {
 		try {
 			// Health of the server serving this page, not of a selected peer
-			// instance, so the overlay never hides the instance selector.
+			// instance, so the overlay never hides the instance switcher.
 			const res = await fetch('/actuator/health', { signal: AbortSignal.timeout(3000) });
 			if (res.ok) {
 				if (serverDown) {
@@ -43,21 +42,6 @@
 <div class="app-shell">
 	<Nav />
 	<main class="app-main">
-		{#if instances.multiple}
-			<header class="instance-bar">
-				<label class="instance-label" for="instance-select">Instance</label>
-				<select
-					id="instance-select"
-					class="instance-select"
-					value={instances.active}
-					onchange={(e) => selectInstance(e.currentTarget.value, instances.current)}
-				>
-					{#each instances.names as name}
-						<option value={name}>{name}</option>
-					{/each}
-				</select>
-			</header>
-		{/if}
 		{@render children()}
 	</main>
 </div>
@@ -102,52 +86,7 @@
 		overflow-x: hidden;
 	}
 
-	/* Instance selector, when the server manages several instances. Same
-	   height and border as the sidebar's brand row. */
-	.instance-bar {
-		display: flex;
-		align-items: center;
-		gap: 0.625rem;
-		height: 52px;
-		margin: -2rem -2rem 2rem;
-		padding: 0 2rem;
-		border-bottom: 1px solid var(--border);
-		background: var(--bg-surface);
-		flex-shrink: 0;
-	}
-
-	.instance-label {
-		font-size: 0.6875rem;
-		font-weight: 600;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		color: var(--text-muted);
-	}
-
-	.instance-select {
-		min-width: 11rem;
-		padding: 0.375rem 0.625rem;
-		border: 1px solid var(--border);
-		border-radius: var(--radius-sm);
-		background: var(--bg-raised);
-		color: var(--text-primary);
-		font-family: var(--font-mono);
-		font-size: 0.8125rem;
-		cursor: pointer;
-	}
-
-	.instance-select:focus-visible {
-		outline: 2px solid var(--border-focus);
-		outline-offset: 1px;
-	}
-
 	@media (max-width: 768px) {
-		.instance-bar {
-			height: 44px;
-			margin: -1rem -1rem 1rem;
-			padding: 0 1rem;
-		}
-
 		.app-shell {
 			flex-direction: column;
 		}

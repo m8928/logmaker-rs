@@ -16,7 +16,7 @@ export const instances = {
 	get active() {
 		return active;
 	},
-	/** Whether the instance bar is shown. */
+	/** Whether the instance switcher is shown. */
 	get multiple() {
 		return names.length > 1;
 	}
